@@ -107,7 +107,8 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
           child: CustomSearchBar(
             isTitle: isTitle,
             onCancel: () => context.read<ProductCubit>().searchProducts(''),
-            onChanged: (value) => context.read<ProductCubit>().searchProducts(value),
+            onChanged: (value) =>
+                context.read<ProductCubit>().searchProducts(value),
             focus: focus,
             controllerTiltle: controllerTiltle,
             title: 'Papelera de Reciclaje',
@@ -123,10 +124,8 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
       body: BlocBuilder<ProductCubit, ProductState>(
         builder: (context, productState) {
           int? idSelected;
-          bool isLowerStock = false;
           if (productState is ProductLoaded) {
             idSelected = productState.selectedCategoryId;
-            isLowerStock = productState.isShowingOutOfStock;
           }
           return Column(
             children: [
@@ -139,11 +138,6 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
                     return CategoryList(
                       categories: categoryState.categories,
                       selectedCategoryId: idSelected,
-                      isLowStockSelected: isLowerStock,
-                      isRecycleBin: true,
-                      onSelected: () => context
-                          .read<ProductCubit>()
-                          .loadOutOfStockProducts(),
                       onCategorySelected: (category) {
                         if (category.id == idSelected) {
                           context.read<ProductCubit>().loadOutOfStockProducts();
@@ -151,9 +145,9 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
                           context.read<ProductCubit>().loadProductsByCategories(
                             category.id,
                           );
-                          context.read<ProductCubit>().filterByStatus(
-                            [ProductStatus.outOfStock],
-                          );
+                          context.read<ProductCubit>().filterByStatus([
+                            ProductStatus.outOfStock,
+                          ]);
                         }
                       },
                     );

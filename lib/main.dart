@@ -8,12 +8,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(
     url: 'https://yreqcxcolrrafdkmhsoq.supabase.co',
     anonKey: 'sb_publishable_ovQyabcWMZXgZ4BHGcVYzA_2k_bxwia',
   );
 
-  WidgetsFlutterBinding.ensureInitialized();
   await init();
   runApp(MyApp());
 }

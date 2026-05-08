@@ -139,13 +139,10 @@ class _HomeScreenState extends State<HomeScreen> {
       body: BlocBuilder<ProductCubit, ProductState>(
         builder: (context, productState) {
           int? idSelected;
-          bool isLowerStock = false;
           if (productState is ProductLoaded) {
             idSelected = productState.selectedCategoryId;
-            isLowerStock = productState.isShowingOutOfStock;
           } else if (productState is ProductLoading) {
             idSelected = productState.categoryId;
-            isLowerStock = productState.isShowingOutOfStock;
           }
           return Column(
             children: [
@@ -155,16 +152,32 @@ class _HomeScreenState extends State<HomeScreen> {
                     return const CategoryListSkeleton();
                   }
                   if (categoryState is CategoryMainLoaded) {
+                    if (categoryState.categories.isEmpty) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 12.0,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'No hay categorías principales configuradas.',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Para usar el filtrado por categorías, agrega primero una familia de categorías desde el formulario de producto.',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
                     return CategoryList(
-                      isRecycleBin: false,
                       categories: categoryState.categories,
                       selectedCategoryId: idSelected,
-                      isLowStockSelected: productState is ProductLoaded
-                          ? productState.isShowingOutOfStock
-                          : false,
-                      onSelected: () => context
-                          .read<ProductCubit>()
-                          .loadOutOfStockProducts(),
                       onCategorySelected: (category) {
                         if (category.id == idSelected) {
                           context.read<ProductCubit>().loadProducts();

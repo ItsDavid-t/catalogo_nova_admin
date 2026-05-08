@@ -1,4 +1,3 @@
-import 'package:echo_stock/data/datasources/local_product_data_source.dart';
 import 'package:echo_stock/data/repositories/category_repository_impl.dart';
 import 'package:echo_stock/data/repositories/product_repository_impl.dart';
 import 'package:echo_stock/domain/repositories/category_repository.dart';
@@ -18,19 +17,17 @@ import 'package:echo_stock/domain/usecases/product/upgrate_product.dart';
 import 'package:echo_stock/presentation/cubit/category/category_cubit.dart';
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
 import 'package:get_it/get_it.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
-  // 1. Registramos el cliente de Supabase para que esté disponible en toda la App
   sl.registerLazySingleton(() => Supabase.instance.client);
 
-  // 2. El repositorio ahora recibirá automáticamente el SupabaseClient (porque sl() lo busca)
   sl.registerLazySingleton<ProductRepository>(
     () => ProductRepositoryImpl(sl()),
   );
 
-  // 3. OJO: El CategoryRepository también debe actualizarse si vas a usar Supabase para categorías
   sl.registerLazySingleton<CategoryRepository>(
     () => CategoryRepositoryImpl(sl()),
   );

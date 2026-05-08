@@ -5,14 +5,14 @@ class Category {
   Category({this.id, this.parentId, required this.name});
 
   Map<String, dynamic> toMap() {
-    return {'id': id, 'name': name, 'parent_id': parentId};
+    return {'id': id, 'name': name, 'parentId': parentId};
   }
 
   factory Category.fromMap(Map<String, dynamic> map) {
     return Category(
       id: map['id'] as int?,
       name: map['name'] as String,
-      parentId: map['parent_id'] as int?,
+      parentId: map['parentId'] as int?,
     );
   }
 
@@ -25,7 +25,7 @@ class Category {
   }
 
   @override
-  String toString() => 'Category(id: $id, name: $name, parent_id: $parentId)';
+  String toString() => 'Category(id: $id, name: $name, parentId: $parentId)';
 
   @override
   bool operator ==(Object other) {

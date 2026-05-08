@@ -27,10 +27,10 @@ class Product {
       'name': name,
       'description': description,
       'classification': classification?.trim().toLowerCase(),
-      'category_id': categoryId,
-      'img_url': imgUrl,
+      'categoryId': categoryId,
+      'imgUrl': imgUrl,
       'status': status.name,
-      'created_at': createdAt.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 
@@ -40,10 +40,11 @@ class Product {
       name: map['name'] as String,
       description: map['description'] as String?,
       classification: map['classification'] as String?,
-      categoryId: map['category_id'] as int?,
-      imgUrl: (map['img_url'] ?? '') as String,
+      categoryId: map['categoryId'] as int?,
+      imgUrl: (map['imgUrl'] ?? '') as String,
       status: _statusFromString((map['status'] ?? 'available') as String),
-      createdAt: DateTime.tryParse((map['created_at'] ?? '') as String) ??
+      createdAt:
+          DateTime.tryParse((map['createdAt'] ?? '') as String) ??
           DateTime.now(),
     );
   }

@@ -1,4 +1,3 @@
-import 'dart:developer' as developer;
 import 'package:echo_stock/domain/core/failures.dart';
 import 'package:echo_stock/domain/entities/product.dart';
 import 'package:echo_stock/domain/repositories/product_repository.dart';
@@ -13,7 +12,7 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Either<Failure, List<Product>>> getAllProducts() async {
     try {
-      final response = await _superBaseClient.from('product').select();
+      final response = await _superBaseClient.from('Product').select();
       final List<Product> products = (response as List)
           .map((element) => Product.fromMap(element))
           .toList();
@@ -79,9 +78,12 @@ class ProductRepositoryImpl implements ProductRepository {
   @override
   Future<Either<Failure, Unit>> addProduct(Product product) async {
     try {
-      await _superBaseClient.from('Product').insert(product.toMap());
+      final data = product.toMap();
+      data.remove('id');
+      await _superBaseClient.from('Product').insert(data);
       return Right(unit);
     } catch (e) {
+      print("ERROR DE SUPABASE: $e");
       if (e.toString().contains('UNIQUE')) {
         return Left(ValidationFailure('Ese nombre de producto ya existe'));
       }

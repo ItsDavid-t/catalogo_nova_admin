@@ -21,6 +21,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _descriptionController = TextEditingController();
   final _classificationController = TextEditingController();
   final _imgUrlController = TextEditingController();
+  final _newCategoryController = TextEditingController();
   Category? _selectedFamily;
   ProductStatus? _selectedStatus;
 
@@ -45,6 +46,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _descriptionController.dispose();
     _classificationController.dispose();
     _imgUrlController.dispose();
+    _newCategoryController.dispose();
     super.dispose();
   }
 
@@ -100,6 +102,64 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 
+  Future<void> _showAddCategoryDialog() async {
+    _newCategoryController.clear();
+    final created = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Agregar categoría'),
+          content: TextField(
+            controller: _newCategoryController,
+            decoration: const InputDecoration(
+              labelText: 'Nombre de la categoría',
+              hintText: 'Ej. Bebidas',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (_newCategoryController.text.trim().isEmpty) {
+                  return;
+                }
+                Navigator.pop(context, true);
+              },
+              child: const Text('Crear'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (created != true) return;
+
+    final newCategoryName = _newCategoryController.text.trim();
+    await context.read<CategoryCubit>().addCategory(
+      Category(name: newCategoryName),
+    );
+    await context.read<CategoryCubit>().fetchMainCategories();
+    final categoryState = context.read<CategoryCubit>().state;
+    if (categoryState is CategoryMainLoaded) {
+      try {
+        final createdCategory = categoryState.categories.firstWhere(
+          (c) => c.name == newCategoryName,
+        );
+        if (mounted) {
+          setState(() {
+            _selectedFamily = createdCategory;
+          });
+        }
+      } catch (_) {
+        // ignore: avoid_returning_null_for_void
+        return;
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final message = widget.product == null ? 'Agregar' : 'Actualizar';
@@ -151,18 +211,79 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     BlocBuilder<CategoryCubit, CategoryState>(
                       builder: (context, state) {
                         if (state is CategoryLoading) {
-                          return const CircularProgressIndicator();
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+                        if (state is CategoryError) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Error cargando categorías: ${state.message}',
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed: () => context
+                                    .read<CategoryCubit>()
+                                    .fetchMainCategories(),
+                                child: const Text('Reintentar'),
+                              ),
+                            ],
+                          );
                         }
                         if (state is CategoryMainLoaded) {
+                          if (state.categories.isEmpty) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'No hay familias de categorías disponibles.',
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Agrega una categoría principal para poder asignar productos.',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
+                                const SizedBox(height: 12),
+                                ElevatedButton(
+                                  onPressed: _showAddCategoryDialog,
+                                  child: const Text('Agregar categoría'),
+                                ),
+                              ],
+                            );
+                          }
+
+                          if (_selectedFamily == null &&
+                              widget.product?.categoryId != null) {
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              final match = state.categories.firstWhere(
+                                (category) =>
+                                    category.id == widget.product!.categoryId,
+                                orElse: () => state.categories.first,
+                              );
+
+                              if (mounted && _selectedFamily == null) {
+                                setState(() {
+                                  _selectedFamily = match;
+                                });
+                              }
+                            });
+                          }
+
                           return Column(
                             children: [
                               DropdownButtonFormField<Category>(
-                                value: _selectedFamily,
+                                initialValue: _selectedFamily,
                                 decoration: const InputDecoration(
                                   prefixIcon: Icon(Icons.category_outlined),
                                   labelText: 'Familia de categorías',
                                 ),
-                                items: state.categories.map((Category category) {
+                                items: state.categories.map((
+                                  Category category,
+                                ) {
                                   return DropdownMenuItem(
                                     value: category,
                                     child: Text(category.name),
@@ -205,7 +326,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   title: 'Estado del producto',
                   children: [
                     DropdownButtonFormField<ProductStatus>(
-                      value: _selectedStatus,
+                      initialValue: _selectedStatus,
                       decoration: const InputDecoration(
                         labelText: 'Estado',
                         prefixIcon: Icon(Icons.info_outline),
@@ -216,7 +337,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           child: Text(status.name),
                         );
                       }).toList(),
-                      onChanged: (value) => setState(() => _selectedStatus = value),
+                      onChanged: (value) =>
+                          setState(() => _selectedStatus = value),
                     ),
                   ],
                 ),
