@@ -1,9 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:echo_stock/domain/entities/product.dart';
 import 'package:echo_stock/domain/usecases/product/add_product.dart';
 import 'package:echo_stock/domain/usecases/product/delete_product.dart';
 import 'package:echo_stock/domain/usecases/product/get_all_products.dart';
 import 'package:echo_stock/domain/usecases/product/get_out_of_stock_product.dart';
 import 'package:echo_stock/domain/usecases/product/get_products_by_categories.dart';
+import 'package:echo_stock/domain/usecases/product/upload_product_image.dart';
 import 'package:echo_stock/domain/usecases/product/upgrate_product.dart';
 import 'package:echo_stock/presentation/cubit/product/product_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -13,6 +16,7 @@ class ProductCubit extends Cubit<ProductState> {
   final AddProduct _addProduct;
   final UpgrateProduct _upgrateProduct;
   final GetOutOfStockProduct _getOutOfStockProduct;
+  final UploadProductImage _uploadProductImage;
   final DeleteProduct _deleteProduct;
   final GetProductsByCategories _getProductsByCategories;
 
@@ -21,6 +25,7 @@ class ProductCubit extends Cubit<ProductState> {
     this._addProduct,
     this._upgrateProduct,
     this._getOutOfStockProduct,
+    this._uploadProductImage,
     this._deleteProduct,
     this._getProductsByCategories,
   ) : super(ProductInitial());
@@ -137,31 +142,28 @@ class ProductCubit extends Cubit<ProductState> {
   Future<void> loadOutOfStockProducts() async {
     emit(ProductLoading(categoryId: null, isShowingOutOfStock: true));
     final result = await _getOutOfStockProduct();
-    result.fold(
-      (failure) => emit(ProductError(failure.message)),
-      (products) {
-        final filtered = _applyFilters(
+    result.fold((failure) => emit(ProductError(failure.message)), (products) {
+      final filtered = _applyFilters(
+        products,
+        null,
+        [],
+        [ProductStatus.outOfStock],
+        ProductOption.nameAz,
+        true,
+      );
+      emit(
+        ProductLoaded(
           products,
+          filtered,
           null,
           [],
           [ProductStatus.outOfStock],
+          false,
           ProductOption.nameAz,
           true,
-        );
-        emit(
-          ProductLoaded(
-            products,
-            filtered,
-            null,
-            [],
-            [ProductStatus.outOfStock],
-            false,
-            ProductOption.nameAz,
-            true,
-          ),
-        );
-      },
-    );
+        ),
+      );
+    });
   }
 
   List<Product> _applyFilters(
@@ -267,31 +269,25 @@ class ProductCubit extends Cubit<ProductState> {
 
   Future<void> addProduct(Product product) async {
     final result = await _addProduct(product);
-    result.fold(
-      (failure) => emit(ProductError(failure.message)),
-      (_) {
-        emit(const ProductActionSucces('Producto agregado correctamente'));
-        loadProducts();
-      },
-    );
+    result.fold((failure) => emit(ProductError(failure.message)), (_) {
+      emit(const ProductActionSucces('Producto agregado correctamente'));
+      loadProducts();
+    });
   }
 
   Future<void> updateProduct(Product product) async {
     final result = await _upgrateProduct(product);
-    result.fold(
-      (failure) => emit(ProductError(failure.message)),
-      (_) {
-        emit(const ProductActionSucces('Producto actualizado correctamente'));
-        loadProducts();
-      },
-    );
+    result.fold((failure) => emit(ProductError(failure.message)), (_) {
+      emit(const ProductActionSucces('Producto actualizado correctamente'));
+      _reloadCurrentList();
+    });
   }
 
   Future<void> deleteProduct(int id) async {
     final result = await _deleteProduct(id);
     result.fold(
       (failure) => emit(ProductError(failure.message)),
-      (_) => loadProducts(),
+      (_) => _reloadCurrentList(),
     );
   }
 
@@ -304,5 +300,22 @@ class ProductCubit extends Cubit<ProductState> {
     ProductStatus newStatus,
   ) async {
     await updateProduct(product.copyWith(status: newStatus));
+  }
+
+  Future<String?> uploadProductImage(Uint8List bytes, String fileName) async {
+    final result = await _uploadProductImage(bytes, fileName);
+    return result.fold((failure) {
+      emit(ProductError(failure.message));
+      return null;
+    }, (url) => url);
+  }
+
+  void _reloadCurrentList() {
+    final currentState = state;
+    if (currentState is ProductLoaded && currentState.isShowingOutOfStock) {
+      loadOutOfStockProducts();
+    } else {
+      loadProducts();
+    }
   }
 }

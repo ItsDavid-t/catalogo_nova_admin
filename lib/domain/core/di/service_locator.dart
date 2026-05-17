@@ -13,6 +13,7 @@ import 'package:echo_stock/domain/usecases/product/delete_product.dart';
 import 'package:echo_stock/domain/usecases/product/get_all_products.dart';
 import 'package:echo_stock/domain/usecases/product/get_out_of_stock_product.dart';
 import 'package:echo_stock/domain/usecases/product/get_products_by_categories.dart';
+import 'package:echo_stock/domain/usecases/product/upload_product_image.dart';
 import 'package:echo_stock/domain/usecases/product/upgrate_product.dart';
 import 'package:echo_stock/presentation/cubit/category/category_cubit.dart';
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
@@ -41,6 +42,8 @@ Future<void> init() async {
 
   sl.registerFactory(() => GetOutOfStockProduct(sl()));
 
+  sl.registerFactory(() => UploadProductImage(sl()));
+
   sl.registerFactory(() => DeleteProduct(sl()));
 
   sl.registerFactory(() => GetAllCategories(sl()));
@@ -55,7 +58,9 @@ Future<void> init() async {
 
   sl.registerFactory(() => EnsureSubCategory(sl()));
 
-  sl.registerFactory(() => ProductCubit(sl(), sl(), sl(), sl(), sl(), sl()));
+  sl.registerFactory(
+    () => ProductCubit(sl(), sl(), sl(), sl(), sl(), sl(), sl()),
+  );
 
   sl.registerFactory(() => CategoryCubit(sl(), sl(), sl(), sl(), sl(), sl()));
 }

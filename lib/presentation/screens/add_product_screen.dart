@@ -1,9 +1,12 @@
+import 'dart:typed_data';
+
 import 'package:echo_stock/domain/entities/category.dart';
 import 'package:echo_stock/domain/entities/product.dart';
 import 'package:echo_stock/presentation/cubit/category/category_cubit.dart';
 import 'package:echo_stock/presentation/cubit/category/category_state.dart';
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
 import 'package:echo_stock/presentation/cubit/product/product_state.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -24,6 +27,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _newCategoryController = TextEditingController();
   Category? _selectedFamily;
   ProductStatus? _selectedStatus;
+  Uint8List? _selectedImageBytes;
+  String? _selectedImageName;
 
   @override
   void initState() {
@@ -60,6 +65,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _showErrorSnackBar('Por favor, selecciona un estado');
       return;
     }
+
+    if (_imgUrlController.text.isEmpty && _selectedImageBytes == null) {
+      _showErrorSnackBar('Por favor, selecciona o ingresa una imagen');
+      return;
+    }
+
+    String imgUrl = _imgUrlController.text;
+
+    if (_selectedImageBytes != null && _selectedImageName != null) {
+      final uploadedUrl = await context.read<ProductCubit>().uploadProductImage(
+        _selectedImageBytes!,
+        _selectedImageName!,
+      );
+      if (uploadedUrl == null) {
+        return;
+      }
+      imgUrl = uploadedUrl;
+    }
+
     final classificationText = _classificationController.text.trim();
     int idCategory = _selectedFamily!.id!;
     if (classificationText.isNotEmpty) {
@@ -80,7 +104,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           : _descriptionController.text,
       classification: classificationText.isEmpty ? null : classificationText,
       categoryId: idCategory,
-      imgUrl: _imgUrlController.text,
+      imgUrl: imgUrl,
       status: _selectedStatus!,
       createdAt: widget.product?.createdAt ?? DateTime.now(),
     );
@@ -89,6 +113,22 @@ class _AddProductScreenState extends State<AddProductScreen> {
       await context.read<ProductCubit>().addProduct(product);
     } else {
       await context.read<ProductCubit>().updateProduct(product);
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final result = await openFile(
+      acceptedTypeGroups: [
+        XTypeGroup(label: 'images', extensions: ['png', 'jpg', 'jpeg', 'gif']),
+      ],
+    );
+
+    if (result != null) {
+      final bytes = await result.readAsBytes();
+      setState(() {
+        _selectedImageBytes = bytes;
+        _selectedImageName = result.name;
+      });
     }
   }
 
@@ -303,6 +343,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                   prefixIcon: Icon(Icons.category),
                                 ),
                               ),
+                              const SizedBox(height: 12),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: TextButton.icon(
+                                  onPressed: _showAddCategoryDialog,
+                                  icon: const Icon(Icons.add),
+                                  label: const Text(
+                                    'Agregar familia de categoría',
+                                  ),
+                                ),
+                              ),
                             ],
                           );
                         }
@@ -310,15 +361,33 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       },
                     ),
                     const SizedBox(height: 15),
-                    TextFormField(
-                      controller: _imgUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'URL de imagen',
-                        prefixIcon: Icon(Icons.image_outlined),
-                      ),
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? 'Campo obligatorio' : null,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _imgUrlController,
+                            decoration: const InputDecoration(
+                              labelText: 'URL de imagen',
+                              prefixIcon: Icon(Icons.image_outlined),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        ElevatedButton.icon(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.upload_file),
+                          label: const Text('Seleccionar'),
+                        ),
+                      ],
                     ),
+                    if (_selectedImageName != null) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'Archivo seleccionado: $_selectedImageName',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 24),

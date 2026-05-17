@@ -1,5 +1,6 @@
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
 import 'package:echo_stock/presentation/screens/home_screen.dart';
+import 'package:echo_stock/presentation/screens/recycle_bin_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -37,6 +38,22 @@ class CustomDrawer extends StatelessWidget {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const HomeScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(
+              Icons.delete_outline,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            title: Text("Papelera de reciclaje"),
+            onTap: () {
+              context.read<ProductCubit>().loadOutOfStockProducts();
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const RecycleBinScreen(),
+                ),
               );
             },
           ),

@@ -91,7 +91,7 @@ class CategoryRepositoryImpl implements CategoryRepository {
           .single();
       return Right(response['id'] as int);
     } catch (e) {
-      print("ERROR DE SUPABASE: $e");
+      developer.log("ERROR DE SUPABASE: $e");
       return Left(DatabaseFailure("Error de conexión"));
     }
   }

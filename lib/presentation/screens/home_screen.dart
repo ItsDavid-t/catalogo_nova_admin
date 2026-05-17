@@ -122,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 context.read<ProductCubit>().searchProducts(value),
             focus: focus,
             controllerTiltle: controllerTiltle,
-            title: 'Catalogo Nova Admin',
+            title: 'Catalogo Admin',
             borderColor: Theme.of(context).colorScheme.primary,
           ),
         ),
