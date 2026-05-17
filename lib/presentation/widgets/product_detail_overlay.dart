@@ -1,17 +1,60 @@
 import 'dart:ui';
 
+import 'package:echo_stock/domain/core/di/service_locator.dart';
 import 'package:echo_stock/domain/entities/product.dart';
+import 'package:echo_stock/domain/usecases/category/get_category_by_id.dart';
 import 'package:flutter/material.dart';
 
 class ProductDetailOverlay extends StatefulWidget {
   final Product product;
-  const ProductDetailOverlay({super.key, required this.product});
+  final String? categoryName;
+  const ProductDetailOverlay({
+    super.key,
+    required this.product,
+    this.categoryName,
+  });
 
   @override
   State<ProductDetailOverlay> createState() => _ProductDetailOverlayState();
 }
 
 class _ProductDetailOverlayState extends State<ProductDetailOverlay> {
+  String? _categoryName;
+  bool _loadingCategory = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _categoryName = widget.categoryName;
+    if (widget.product.categoryId != null && _categoryName == null) {
+      _loadCategoryName();
+    }
+  }
+
+  Future<void> _loadCategoryName() async {
+    setState(() {
+      _loadingCategory = true;
+    });
+
+    final result = await sl<GetCategoryById>().call(widget.product.categoryId!);
+    result.fold(
+      (_) {
+        if (!mounted) return;
+        setState(() {
+          _categoryName = 'Categoría desconocida';
+          _loadingCategory = false;
+        });
+      },
+      (category) {
+        if (!mounted) return;
+        setState(() {
+          _categoryName = category.name;
+          _loadingCategory = false;
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final statusColor = switch (widget.product.status) {
@@ -71,54 +114,48 @@ class _ProductDetailOverlayState extends State<ProductDetailOverlay> {
                         if (widget.product.categoryId != null)
                           Chip(
                             avatar: const Icon(Icons.category_outlined),
-                            label: Text('${widget.product.categoryId}'),
+                            label: Text(
+                              _categoryName ??
+                                  (_loadingCategory
+                                      ? 'Cargando categoría...'
+                                      : 'Categoría desconocida'),
+                            ),
                           ),
                       ],
                     ),
-
+                    SizedBox(height: 12),
                     if (widget.product.classification != null &&
                         widget.product.classification!.isNotEmpty) ...[
-                      SizedBox(height: 16),
-                      Divider(
-                        color: Theme.of(context).colorScheme.secondary,
-                        thickness: 0.5,
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white10,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 12,
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Icon(Icons.category, size: 30),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                widget.product.classification.toString(),
+
+                                style: Theme.of(context).textTheme.headlineSmall
+                                    ?.copyWith(
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.bold,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       SizedBox(height: 12),
-                      if (widget.product.classification != null &&
-                          widget.product.classification!.isNotEmpty) ...[
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white10,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            vertical: 8,
-                            horizontal: 12,
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Icon(Icons.category, size: 30),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  widget.product.classification.toString(),
-
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineSmall
-                                      ?.copyWith(
-                                        color: Colors.grey,
-                                        fontWeight: FontWeight.bold,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        SizedBox(height: 12),
-                      ],
                     ],
 
                     if (widget.product.description != null) ...[

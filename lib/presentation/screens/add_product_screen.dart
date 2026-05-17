@@ -153,7 +153,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             controller: _newCategoryController,
             decoration: const InputDecoration(
               labelText: 'Nombre de la categoría',
-              hintText: 'Ej. Bebidas',
+              hintText: 'Ej. Herramientas',
             ),
           ),
           actions: [
@@ -403,7 +403,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       items: ProductStatus.values.map((status) {
                         return DropdownMenuItem(
                           value: status,
-                          child: Text(status.name),
+                          child: Text(status.displayName),
                         );
                       }).toList(),
                       onChanged: (value) =>

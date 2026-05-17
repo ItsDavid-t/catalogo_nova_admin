@@ -1,5 +1,18 @@
 enum ProductStatus { available, reserved, outOfStock }
 
+extension ProductStatusLabel on ProductStatus {
+  String get displayName {
+    switch (this) {
+      case ProductStatus.available:
+        return 'Disponible';
+      case ProductStatus.reserved:
+        return 'Reservado';
+      case ProductStatus.outOfStock:
+        return 'Sin stock';
+    }
+  }
+}
+
 class Product {
   final int? id;
   final String name;

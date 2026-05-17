@@ -90,7 +90,10 @@ class _ProductFiltrerPanelState extends State<ProductFiltrerPanel> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: DropdownButtonFormField<ProductOption>(
                     initialValue: productLoaded.sortOption,
                     decoration: const InputDecoration(
@@ -132,11 +135,10 @@ class _ProductFiltrerPanelState extends State<ProductFiltrerPanel> {
                         spacing: 8,
                         runSpacing: 8,
                         children: ProductStatus.values.map((status) {
-                          final selected = productLoaded.selectedStatus.contains(
-                            status,
-                          );
+                          final selected = productLoaded.selectedStatus
+                              .contains(status);
                           return FilterChip(
-                            label: Text(status.name),
+                            label: Text(status.displayName),
                             selected: selected,
                             onSelected: (value) {
                               final updateList = List<ProductStatus>.from(
@@ -147,7 +149,9 @@ class _ProductFiltrerPanelState extends State<ProductFiltrerPanel> {
                               } else {
                                 updateList.remove(status);
                               }
-                              context.read<ProductCubit>().filterByStatus(updateList);
+                              context.read<ProductCubit>().filterByStatus(
+                                updateList,
+                              );
                             },
                           );
                         }).toList(),

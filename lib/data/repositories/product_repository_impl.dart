@@ -32,10 +32,12 @@ class ProductRepositoryImpl implements ProductRepository {
     int categoryId,
   ) async {
     try {
+      final categoryIds = await _fetchCategoryAndDescendants(categoryId);
+
       final response = await _superBaseClient
           .from('Product')
           .select()
-          .eq('categoryId', categoryId);
+          .inFilter('categoryId', categoryIds);
       final List<Product> products = (response as List)
           .map((element) => Product.fromMap(element))
           .toList();
@@ -43,6 +45,30 @@ class ProductRepositoryImpl implements ProductRepository {
     } catch (e) {
       return Left(DatabaseFailure('Error de conexión'));
     }
+  }
+
+  Future<List<int>> _fetchCategoryAndDescendants(int categoryId) async {
+    final categoryIds = <int>{categoryId};
+    final queue = <int>[categoryId];
+
+    while (queue.isNotEmpty) {
+      final currentId = queue.removeAt(0);
+      final response = await _superBaseClient
+          .from('Category')
+          .select('id')
+          .eq('parentId', currentId);
+      final subCategoryIds = (response as List)
+          .map((category) => category['id'] as int)
+          .toList();
+
+      for (final id in subCategoryIds) {
+        if (categoryIds.add(id)) {
+          queue.add(id);
+        }
+      }
+    }
+
+    return categoryIds.toList();
   }
 
   @override
