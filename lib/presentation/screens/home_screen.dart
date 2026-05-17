@@ -74,6 +74,70 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _refreshContent() async {
+    await Future.wait([
+      context.read<ProductCubit>().loadProducts(),
+      context.read<CategoryCubit>().fetchMainCategories(),
+    ]);
+  }
+
+  Widget _buildProductContent(BuildContext context, ProductState state) {
+    if (state is ProductLoading) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        children: [
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.6,
+            child: const ProductListSkeleton(),
+          ),
+        ],
+      );
+    }
+
+    if (state is ProductLoaded) {
+      if (state.products.isEmpty) {
+        return ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.6,
+              child: const EmptyState(),
+            ),
+          ],
+        );
+      }
+
+      return ProductListView(
+        products: state.filteredProducts,
+        onRemoveProduct: _removeProduct,
+        onTapProduct: (product) async {
+          final resultDialog = await showDialog(
+            context: context,
+            builder: (context) => ProductDetailOverlay(product: product),
+          );
+          if (!mounted) return;
+          if (resultDialog == 'edit') {
+            await _navigatorToEditProduct(product);
+          }
+        },
+        onLongPressProduct: _navigatorToEditProduct,
+      );
+    }
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      children: [
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -202,33 +266,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       }
                     },
                     builder: (context, state) {
-                      if (state is ProductLoading) {
-                        return const ProductListSkeleton();
-                      }
-                      if (state is ProductLoaded) {
-                        if (state.products.isEmpty) {
-                          return const EmptyState();
-                        }
-
-                        return ProductListView(
-                          products: state.filteredProducts,
-                          onRemoveProduct: _removeProduct,
-                          onTapProduct: (product) async {
-                            final resultDialog = await showDialog(
-                              context: context,
-                              builder: (context) =>
-                                  ProductDetailOverlay(product: product),
-                            );
-                            if (!mounted) return;
-                            if (resultDialog == 'edit') {
-                              await _navigatorToEditProduct(product);
-                            }
-                          },
-                          onLongPressProduct: _navigatorToEditProduct,
-                        );
-                      }
-
-                      return const SizedBox();
+                      return RefreshIndicator(
+                        onRefresh: _refreshContent,
+                        child: _buildProductContent(context, state),
+                      );
                     },
                   ),
                 ),

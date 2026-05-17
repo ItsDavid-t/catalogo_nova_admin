@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 import 'dart:typed_data';
 
 import 'package:echo_stock/domain/core/failures.dart';
+import 'package:echo_stock/domain/entities/category.dart';
 import 'package:echo_stock/domain/entities/product.dart';
 import 'package:echo_stock/domain/repositories/product_repository.dart';
 import 'package:fpdart/fpdart.dart';
@@ -111,17 +112,7 @@ class ProductRepositoryImpl implements ProductRepository {
       await _superBaseClient.from('Product').delete().eq('id', id);
 
       if (product.categoryId != null) {
-        final remainingProducts = await _superBaseClient
-            .from('Product')
-            .select('id')
-            .eq('categoryId', product.categoryId!)
-            .limit(1);
-        if (remainingProducts.isEmpty) {
-          await _superBaseClient
-              .from('Category')
-              .delete()
-              .eq('id', product.categoryId!);
-        }
+        await _cleanupOrphanedCategory(product.categoryId!);
       }
 
       if (product.imgUrl.isNotEmpty) {
@@ -133,6 +124,46 @@ class ProductRepositoryImpl implements ProductRepository {
       developer.log("ERROR DE SUPABASE: $e");
       return Left(DatabaseFailure('Error de conexión'));
     }
+  }
+
+  Future<void> _cleanupOrphanedCategory(int categoryId) async {
+    final hasProducts = await _hasProductsForCategory(categoryId);
+    final hasChildren = await _hasSubcategories(categoryId);
+
+    if (hasProducts || hasChildren) {
+      return;
+    }
+
+    final response = await _superBaseClient
+        .from('Category')
+        .select()
+        .eq('id', categoryId)
+        .single();
+    final category = Category.fromMap(response);
+
+    await _superBaseClient.from('Category').delete().eq('id', categoryId);
+
+    if (category.parentId != null) {
+      await _cleanupOrphanedCategory(category.parentId!);
+    }
+  }
+
+  Future<bool> _hasProductsForCategory(int categoryId) async {
+    final response = await _superBaseClient
+        .from('Product')
+        .select('id')
+        .eq('categoryId', categoryId)
+        .limit(1);
+    return (response as List).isNotEmpty;
+  }
+
+  Future<bool> _hasSubcategories(int categoryId) async {
+    final response = await _superBaseClient
+        .from('Category')
+        .select('id')
+        .eq('parentId', categoryId)
+        .limit(1);
+    return (response as List).isNotEmpty;
   }
 
   @override
