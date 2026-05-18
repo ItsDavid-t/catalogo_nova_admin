@@ -33,13 +33,6 @@
 *   **Dependency Injection:** `GetIt` for efficient and modular service management.
 *   **Error Handling:** Functional programming approach using the `Either` pattern for precise debugging.
 
----
-
-### 🏗️ Project Structure
-The project follows professional engineering standards to guarantee long-term maintainability:
-
-```
-
 ### 📱 App Screenshots
 Here are a few app screenshots so the client can preview the interface and workflow directly from the README.
 
@@ -48,6 +41,14 @@ Here are a few app screenshots so the client can preview the interface and workf
   <img src="assets/images/WhatsApp%20Image%202026-05-18%20at%2010.57.59%20AM.jpeg" alt="Catalogo Admin screenshot 2" width="280" />
   <img src="assets/images/WhatsApp%20Image%202026-05-18%20at%2010.58.00%20AM.jpeg" alt="Catalogo Admin screenshot 3" width="280" />
 </p>text
+---
+
+### 🏗️ Project Structure
+The project follows professional engineering standards to guarantee long-term maintainability:
+
+```
+
+
 ── lib
 │   ├── config          # Themes, routes, and global configurations
 │   ├── data            # Repository implementations and Data Sources (Supabase)
