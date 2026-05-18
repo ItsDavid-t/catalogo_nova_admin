@@ -39,8 +39,8 @@
 
 | 🛒 Inventory Dashboard & Querying | ⚙️ Product Mutation & LifeCycle |
 | :---: | :---: |
-| <img src="assets/images/dashboard_full.jpeg" width="270" /><br><sub>*Main view showcasing real-time hardware data*</sub> | <img src="assets/images/add_product.jpeg" width="270" /><br><sub>*Optimized form implementation with reactive validation fields*</sub> |
-| <img src="assets/images/dashboard_filtered.jpeg" width="270" /><br><sub>*Category filtering workflow handling isolated state re-renders*</sub> | <img src="assets/images/product_detail.jpeg" width="270" /><br><sub>*Material 3 Bottom Sheet displaying model relationships*</sub> |
+| <img src="assets/images/WhatsApp%20Image%202026-05-17%20at%2012.34.10%20PM.jpeg" width="270" /><br><sub>*Main view showcasing real-time hardware data*</sub> | <img src="assets/images/WhatsApp%20Image%202026-05-18%20at%2010.57.59%20AM.jpeg" width="270" /><br><sub>*Optimized form implementation with reactive validation fields*</sub> |
+| <img src="assets/images/WhatsApp%20Image%202026-05-17%20at%2012.34.11%20PM.jpeg" width="270" /><br><sub>*Category filtering workflow handling isolated state re-renders*</sub> | <img src="assets/images/WhatsApp%20Image%202026-05-18%20at%2010.58.00%20AM.jpeg" width="270" /><br><sub>*Material 3 Bottom Sheet displaying model relationships*</sub> |
 
 ---
 
