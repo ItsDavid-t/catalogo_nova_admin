@@ -25,6 +25,10 @@ class CategoryCubit extends Cubit<CategoryState> {
     this._ensureSubCategory,
   ) : super(CategoryInitial());
 
+  void reset() {
+    emit(CategoryInitial());
+  }
+
   Future<void> loadCategories() async {
     emit(CategoryLoading());
 
@@ -50,11 +54,11 @@ class CategoryCubit extends Cubit<CategoryState> {
         emit(CategoryError(failure.message));
       },
       (categories) {
-        final normals = categories.where((c) => c.name != 'Otros').toList();
-        final another = categories.where((c) => c.name == 'Otros').toList();
-        categories.sort((a, b) => a.name.compareTo(b.name));
-        List<Category> newList = [...normals, ...another];
-        emit(CategoryMainLoaded(newList));
+        final sorted = List<Category>.from(categories)
+          ..sort((a, b) => a.name.compareTo(b.name));
+        final normals = sorted.where((c) => c.name != 'Otros').toList();
+        final another = sorted.where((c) => c.name == 'Otros').toList();
+        emit(CategoryMainLoaded([...normals, ...another]));
       },
     );
   }

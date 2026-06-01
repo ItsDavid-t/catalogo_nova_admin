@@ -26,7 +26,7 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<ProductCubit>().loadOutOfStockProducts();
+    context.read<ProductCubit>().loadArchiveProducts();
     context.read<CategoryCubit>().fetchMainCategories();
   }
 
@@ -119,7 +119,7 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
         elevation: 0,
       ),
       drawer: CustomDrawer(
-        onRefresh: () => context.read<ProductCubit>().loadOutOfStockProducts(),
+        onRefresh: () => context.read<ProductCubit>().loadArchiveProducts(),
       ),
       body: BlocBuilder<ProductCubit, ProductState>(
         builder: (context, productState) {
@@ -146,7 +146,7 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
                             category.id,
                           );
                           context.read<ProductCubit>().filterByStatus([
-                            ProductStatus.outOfStock,
+                            ProductStatus.reserved,
                           ]);
                         }
                       },

@@ -19,6 +19,7 @@ class Product {
   final String? description;
   final String? classification;
   final int? categoryId;
+  final String? shopId;
   final String imgUrl;
   final ProductStatus status;
   final DateTime createdAt;
@@ -29,13 +30,14 @@ class Product {
     this.description,
     this.classification,
     this.categoryId,
+    this.shopId,
     required this.imgUrl,
     required this.status,
     required this.createdAt,
   });
 
   Map<String, dynamic> toMap() {
-    return {
+    final map = <String, dynamic>{
       'id': id,
       'name': name,
       'description': description,
@@ -45,6 +47,10 @@ class Product {
       'status': status.name,
       'createdAt': createdAt.toIso8601String(),
     };
+    if (shopId != null) {
+      map['shopId'] = shopId;
+    }
+    return map;
   }
 
   factory Product.fromMap(Map<String, dynamic> map) {
@@ -54,6 +60,7 @@ class Product {
       description: map['description'] as String?,
       classification: map['classification'] as String?,
       categoryId: map['categoryId'] as int?,
+      shopId: (map['shopId'] ?? map['shop_id']) as String?,
       imgUrl: (map['imgUrl'] ?? '') as String,
       status: _statusFromString((map['status'] ?? 'available') as String),
       createdAt:
@@ -79,6 +86,7 @@ class Product {
     String? description,
     String? classification,
     int? categoryId,
+    String? shopId,
     String? imgUrl,
     ProductStatus? status,
     DateTime? createdAt,
@@ -89,6 +97,7 @@ class Product {
       description: description ?? this.description,
       classification: classification ?? this.classification,
       categoryId: categoryId ?? this.categoryId,
+      shopId: shopId ?? this.shopId,
       imgUrl: imgUrl ?? this.imgUrl,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,

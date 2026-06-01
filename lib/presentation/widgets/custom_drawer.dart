@@ -1,3 +1,4 @@
+import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
 import 'package:echo_stock/presentation/screens/home_screen.dart';
 import 'package:echo_stock/presentation/screens/recycle_bin_screen.dart';
@@ -55,6 +56,18 @@ class CustomDrawer extends StatelessWidget {
                   builder: (context) => const RecycleBinScreen(),
                 ),
               );
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: Icon(
+              Icons.logout,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            title: const Text('Cerrar sesión'),
+            onTap: () {
+              Navigator.pop(context);
+              context.read<AuthCubit>().logout();
             },
           ),
         ],

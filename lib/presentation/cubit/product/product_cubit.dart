@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:echo_stock/domain/entities/product.dart';
 import 'package:echo_stock/domain/usecases/product/add_product.dart';
+import 'package:echo_stock/domain/usecases/product/archive_product.dart';
 import 'package:echo_stock/domain/usecases/product/delete_product.dart';
 import 'package:echo_stock/domain/usecases/product/get_all_products.dart';
 import 'package:echo_stock/domain/usecases/product/get_out_of_stock_product.dart';
@@ -19,6 +20,7 @@ class ProductCubit extends Cubit<ProductState> {
   final UploadProductImage _uploadProductImage;
   final DeleteProduct _deleteProduct;
   final GetProductsByCategories _getProductsByCategories;
+  final ArchiveProduct _archiveProduct;
 
   ProductCubit(
     this._getAllProducts,
@@ -28,7 +30,12 @@ class ProductCubit extends Cubit<ProductState> {
     this._uploadProductImage,
     this._deleteProduct,
     this._getProductsByCategories,
+    this._archiveProduct,
   ) : super(ProductInitial());
+
+  void reset() {
+    emit(ProductInitial());
+  }
 
   Future<void> loadProducts() async {
     emit(ProductLoading(categoryId: null, isShowingOutOfStock: false));
@@ -54,6 +61,7 @@ class ProductCubit extends Cubit<ProductState> {
           [],
           false,
           ProductOption.nameAz,
+          false,
           false,
         ),
       );
@@ -90,6 +98,7 @@ class ProductCubit extends Cubit<ProductState> {
             [],
             true,
             ProductOption.nameAz,
+            false,
             false,
           ),
         );
@@ -161,6 +170,35 @@ class ProductCubit extends Cubit<ProductState> {
           false,
           ProductOption.nameAz,
           true,
+          false,
+        ),
+      );
+    });
+  }
+
+  Future<void> loadArchiveProducts() async {
+    emit(ProductLoading(categoryId: null, isShowingOutOfStock: false));
+    final result = await _getAllProducts();
+    result.fold((failure) => emit(ProductError(failure.message)), (products) {
+      final filtered = _applyFilters(
+        products,
+        null,
+        [],
+        [ProductStatus.reserved],
+        ProductOption.nameAz,
+        false,
+      );
+      emit(
+        ProductLoaded(
+          products,
+          filtered,
+          null,
+          [],
+          [ProductStatus.reserved],
+          false,
+          ProductOption.nameAz,
+          false,
+          true,
         ),
       );
     });
@@ -190,7 +228,11 @@ class ProductCubit extends Cubit<ProductState> {
       sortList = sortList.where((p) => statuses.contains(p.status)).toList();
     } else if (!isShowingOutOfStock) {
       sortList = sortList
-          .where((p) => p.status != ProductStatus.outOfStock)
+          .where(
+            (p) =>
+                p.status != ProductStatus.outOfStock &&
+                p.status != ProductStatus.reserved,
+          )
           .toList();
     }
 
@@ -278,9 +320,18 @@ class ProductCubit extends Cubit<ProductState> {
   Future<void> updateProduct(Product product) async {
     final result = await _upgrateProduct(product);
     result.fold((failure) => emit(ProductError(failure.message)), (_) {
+      final previousState = state;
       emit(const ProductActionSucces('Producto actualizado correctamente'));
-      _reloadCurrentList();
+      _reloadCurrentList(previousState);
     });
+  }
+
+  Future<void> archiveProduct(int id) async {
+    final result = await _archiveProduct(id);
+    result.fold(
+      (failure) => emit(ProductError(failure.message)),
+      (_) => _reloadCurrentList(),
+    );
   }
 
   Future<void> deleteProduct(int id) async {
@@ -310,10 +361,13 @@ class ProductCubit extends Cubit<ProductState> {
     }, (url) => url);
   }
 
-  void _reloadCurrentList() {
-    final currentState = state;
+  void _reloadCurrentList([ProductState? oldState]) {
+    final currentState = oldState ?? state;
     if (currentState is ProductLoaded && currentState.isShowingOutOfStock) {
       loadOutOfStockProducts();
+    } else if (currentState is ProductLoaded &&
+        currentState.isShowingReserved) {
+      loadArchiveProducts();
     } else {
       loadProducts();
     }

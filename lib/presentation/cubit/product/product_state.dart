@@ -36,6 +36,7 @@ class ProductLoaded extends ProductState {
   final bool isCategoryFiltered;
   final ProductOption sortOption;
   final bool isShowingOutOfStock;
+  final bool isShowingReserved;
 
   const ProductLoaded(
     this.products,
@@ -46,6 +47,7 @@ class ProductLoaded extends ProductState {
     this.isCategoryFiltered,
     this.sortOption,
     this.isShowingOutOfStock,
+    this.isShowingReserved,
   );
   @override
   List<Object?> get props => [
@@ -57,6 +59,7 @@ class ProductLoaded extends ProductState {
     isCategoryFiltered,
     sortOption,
     isShowingOutOfStock,
+    isShowingReserved,
   ];
 
   ProductLoaded copyWith({
@@ -68,6 +71,7 @@ class ProductLoaded extends ProductState {
     bool? isCategoryFiltered,
     ProductOption? sortOption,
     bool? isShowingOutOfStock,
+    bool? isShowingReserved,
   }) {
     return ProductLoaded(
       products ?? this.products,
@@ -80,6 +84,7 @@ class ProductLoaded extends ProductState {
       isCategoryFiltered ?? this.isCategoryFiltered,
       sortOption ?? this.sortOption,
       isShowingOutOfStock ?? this.isShowingOutOfStock,
+      isShowingReserved ?? this.isShowingReserved,
     );
   }
 }

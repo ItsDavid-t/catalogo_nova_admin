@@ -123,6 +123,24 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
+  Future<Either<Failure, Unit>> archiveProduct(int id) async {
+    if (id <= 0) {
+      return Left(ValidationFailure("ID del producto inválido"));
+    }
+    try {
+      await _superBaseClient
+          .from('Product')
+          .update({'status': 'reserved'})
+          .eq('id', id);
+
+      return Right(unit);
+    } catch (e) {
+      developer.log("ERROR DE SUPABASE: $e");
+      return Left(DatabaseFailure('Error de conexión'));
+    }
+  }
+
+  @override
   Future<Either<Failure, Unit>> deleteProduct(int id) async {
     if (id <= 0) {
       return Left(ValidationFailure("ID del producto inválido"));
@@ -236,8 +254,6 @@ class ProductRepositoryImpl implements ProductRepository {
 
   Future<void> _deleteProductImage(String imgUrl) async {
     try {
-      // Parse the path from the public URL
-      // URL format: https://xxx.supabase.co/storage/v1/object/public/product-images/path/to/file
       final uri = Uri.parse(imgUrl);
       final pathSegments = uri.pathSegments;
       final bucketIndex = pathSegments.indexOf('product-images');
@@ -248,7 +264,6 @@ class ProductRepositoryImpl implements ProductRepository {
       }
     } catch (e) {
       developer.log('Error deleting image: $e');
-      // Don't fail the entire operation if image deletion fails
     }
   }
 }

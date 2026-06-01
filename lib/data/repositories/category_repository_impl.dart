@@ -18,9 +18,12 @@ class CategoryRepositoryImpl implements CategoryRepository {
           .map((e) => Category.fromMap(e))
           .toList();
       return Right(categories);
+    } on PostgrestException catch (e) {
+      developer.log('ERROR DE SUPABASE (Category): ${e.message}');
+      return Left(DatabaseFailure(_mapPostgrestMessage(e)));
     } catch (e) {
-      developer.log("ERROR DE SUPABASE: $e");
-      return Left(DatabaseFailure("Error de conexión"));
+      developer.log('ERROR DE SUPABASE (Category): $e');
+      return Left(DatabaseFailure('Error al cargar categorías'));
     }
   }
 
@@ -36,9 +39,12 @@ class CategoryRepositoryImpl implements CategoryRepository {
           .map((e) => Category.fromMap(e))
           .toList();
       return Right(categories);
+    } on PostgrestException catch (e) {
+      developer.log('ERROR DE SUPABASE (Category): ${e.message}');
+      return Left(DatabaseFailure(_mapPostgrestMessage(e)));
     } catch (e) {
-      developer.log("ERROR DE SUPABASE: $e");
-      return Left(DatabaseFailure("Error de conexión"));
+      developer.log('ERROR DE SUPABASE (Category): $e');
+      return Left(DatabaseFailure('Error al cargar categorías principales'));
     }
   }
 
@@ -92,7 +98,15 @@ class CategoryRepositoryImpl implements CategoryRepository {
       return Right(response['id'] as int);
     } catch (e) {
       developer.log("ERROR DE SUPABASE: $e");
-      return Left(DatabaseFailure("Error de conexión"));
+      return Left(DatabaseFailure('Error de conexión'));
     }
+  }
+
+  String _mapPostgrestMessage(PostgrestException exception) {
+    final message = exception.message.toLowerCase();
+    if (message.contains('jwt') || message.contains('permission')) {
+      return 'No tienes permiso para ver categorías. Inicia sesión de nuevo.';
+    }
+    return 'No se pudieron cargar las categorías';
   }
 }

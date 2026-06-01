@@ -1,7 +1,10 @@
+import 'package:echo_stock/presentation/core/ui_feedback.dart';
 import 'package:echo_stock/presentation/cubit/category/category_cubit.dart';
 import 'package:echo_stock/presentation/cubit/category/category_state.dart';
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
 import 'package:echo_stock/presentation/cubit/product/product_state.dart';
+import 'package:echo_stock/presentation/cubit/shop_profile/shop_profile_cubit.dart';
+import 'package:echo_stock/presentation/cubit/shop_profile/shop_profile_state.dart';
 import 'package:echo_stock/presentation/widgets/category_list.dart';
 import 'package:echo_stock/presentation/widgets/category_list_skeleton.dart';
 import 'package:echo_stock/presentation/widgets/custom_drawer.dart';
@@ -13,6 +16,7 @@ import 'package:echo_stock/presentation/widgets/product_detail_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:echo_stock/domain/entities/product.dart';
 import 'package:echo_stock/presentation/screens/add_product_screen.dart';
+import 'package:echo_stock/presentation/screens/account_edit_screen.dart';
 import 'package:echo_stock/presentation/widgets/product_list_skeleton.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -30,8 +34,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<ProductCubit>().loadProducts();
-    context.read<CategoryCubit>().fetchMainCategories();
   }
 
   @override
@@ -43,17 +45,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _removeProduct(Product product) {
     ScaffoldMessenger.of(context).clearSnackBars();
-    context.read<ProductCubit>().markAsOutOfStock(product);
+    context.read<ProductCubit>().archiveProduct(product.id!);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Producto marcado como agotado'),
+        content: const Text('Producto eliminado'),
         duration: const Duration(seconds: 3),
         action: SnackBarAction(
           label: 'Deshacer',
           onPressed: () {
             ScaffoldMessenger.of(context).removeCurrentSnackBar();
-            context.read<ProductCubit>().updateProduct(product);
+            context.read<ProductCubit>().changeProductStatus(
+              product,
+              ProductStatus.available,
+            );
           },
           backgroundColor: Colors.blue.shade700,
         ),
@@ -175,19 +180,40 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             icon: Icon(Icons.tune_outlined),
           ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AccountEditScreen(),
+                ),
+              );
+            },
+            icon: Icon(Icons.account_circle_outlined),
+            tooltip: 'Editar cuenta',
+          ),
         ],
         title: SizedBox(
           height: kToolbarHeight,
           width: double.infinity,
-          child: CustomSearchBar(
-            isTitle: isTitle,
-            onCancel: () => context.read<ProductCubit>().searchProducts(''),
-            onChanged: (value) =>
-                context.read<ProductCubit>().searchProducts(value),
-            focus: focus,
-            controllerTiltle: controllerTiltle,
-            title: 'Catalogo Admin',
-            borderColor: Theme.of(context).colorScheme.primary,
+          child: BlocBuilder<ShopProfileCubit, ShopProfileState>(
+            builder: (context, shopProfileState) {
+              String shopName = 'Catálogo Admin';
+              if (shopProfileState is ShopProfileLoaded) {
+                shopName = shopProfileState.profile.shopName;
+              }
+
+              return CustomSearchBar(
+                isTitle: isTitle,
+                onCancel: () => context.read<ProductCubit>().searchProducts(''),
+                onChanged: (value) =>
+                    context.read<ProductCubit>().searchProducts(value),
+                focus: focus,
+                controllerTiltle: controllerTiltle,
+                title: shopName,
+                borderColor: Theme.of(context).colorScheme.primary,
+              );
+            },
           ),
         ),
         elevation: 0,
@@ -215,6 +241,27 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (categoryState is CategoryLoading) {
                     return const CategoryListSkeleton();
                   }
+                  if (categoryState is CategoryError) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      child: buildInlineErrorBanner(
+                        message: categoryState.message,
+                        onRetry: () =>
+                            context.read<CategoryCubit>().fetchMainCategories(),
+                      ),
+                    );
+                  }
+
+                  if (categoryState is CategoryInitial) {
+                    return const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
                   if (categoryState is CategoryMainLoaded) {
                     if (categoryState.categories.isEmpty) {
                       return Padding(

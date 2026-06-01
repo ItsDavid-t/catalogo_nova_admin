@@ -24,3 +24,15 @@ class NetworkFailure extends Failure {
 class NotFoundFailure extends Failure {
   const NotFoundFailure(super.message);
 }
+
+class AuthenticationFailure extends Failure {
+  final bool suggestRegistration;
+
+  const AuthenticationFailure(
+    super.message, {
+    this.suggestRegistration = false,
+  });
+
+  @override
+  List<Object?> get props => [message, suggestRegistration];
+}

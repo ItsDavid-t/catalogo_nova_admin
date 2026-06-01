@@ -9,6 +9,7 @@ abstract class ProductRepository {
   Future<Either<Failure, List<Product>>> getOutOfStockProductsByCategories(
     int categoryId,
   );
+  Future<Either<Failure, Unit>> archiveProduct(int id);
   Future<Either<Failure, Unit>> addProduct(Product product);
   Future<Either<Failure, Unit>> deleteProduct(int id);
   Future<Either<Failure, Unit>> updateProduct(Product product);
