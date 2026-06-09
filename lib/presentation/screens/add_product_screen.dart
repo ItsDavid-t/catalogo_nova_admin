@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:echo_stock/domain/entities/category.dart';
 import 'package:echo_stock/domain/entities/product.dart';
+import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
 import 'package:echo_stock/presentation/cubit/category/category_cubit.dart';
 import 'package:echo_stock/presentation/cubit/category/category_state.dart';
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
@@ -42,7 +43,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
     } else {
       _selectedStatus = ProductStatus.available;
     }
-    context.read<CategoryCubit>().fetchMainCategories();
+    final currentUserId = context.read<AuthCubit>().currentSession?.uuid;
+    context.read<CategoryCubit>().fetchMainCategories(shopId: currentUserId);
   }
 
   @override
@@ -83,13 +85,18 @@ class _AddProductScreenState extends State<AddProductScreen> {
       }
       imgUrl = uploadedUrl;
     }
+    final currentUserId = context.read<AuthCubit>().currentSession?.uuid;
 
     final classificationText = _classificationController.text.trim();
     int idCategory = _selectedFamily!.id!;
     if (classificationText.isNotEmpty) {
       final finalCategoryById = await context
           .read<CategoryCubit>()
-          .ensureSubCategory(classificationText, _selectedFamily!.id!);
+          .ensureSubCategory(
+            classificationText,
+            _selectedFamily!.id!,
+            currentUserId,
+          );
 
       if (finalCategoryById != -1) {
         idCategory = finalCategoryById;
@@ -107,6 +114,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       imgUrl: imgUrl,
       status: _selectedStatus!,
       createdAt: widget.product?.createdAt ?? DateTime.now(),
+      shopId: currentUserId,
     );
 
     if (widget.product == null) {
@@ -177,11 +185,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     if (created != true) return;
 
+    final currentUserId = context.read<AuthCubit>().currentSession?.uuid;
     final newCategoryName = _newCategoryController.text.trim();
     await context.read<CategoryCubit>().addCategory(
-      Category(name: newCategoryName),
+      Category(name: newCategoryName, shopId: currentUserId),
     );
-    await context.read<CategoryCubit>().fetchMainCategories();
+    await context.read<CategoryCubit>().fetchMainCategories(
+      shopId: currentUserId,
+    );
     final categoryState = context.read<CategoryCubit>().state;
     if (categoryState is CategoryMainLoaded) {
       try {
@@ -194,7 +205,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
           });
         }
       } catch (_) {
-        // ignore: avoid_returning_null_for_void
         return;
       }
     }
@@ -265,9 +275,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               ),
                               const SizedBox(height: 12),
                               ElevatedButton(
-                                onPressed: () => context
-                                    .read<CategoryCubit>()
-                                    .fetchMainCategories(),
+                                onPressed: () {
+                                  final currentUserId = context
+                                      .read<AuthCubit>()
+                                      .currentSession
+                                      ?.uuid;
+                                  context
+                                      .read<CategoryCubit>()
+                                      .fetchMainCategories(
+                                        shopId: currentUserId,
+                                      );
+                                },
                                 child: const Text('Reintentar'),
                               ),
                             ],

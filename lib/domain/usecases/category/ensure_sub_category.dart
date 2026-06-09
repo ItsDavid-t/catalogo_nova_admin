@@ -6,8 +6,12 @@ import 'package:fpdart/fpdart.dart';
 class EnsureSubCategory {
   final CategoryRepository _repository;
   const EnsureSubCategory(this._repository);
-  Future<Either<Failure, int>> call(String name, int idP) async {
-    final result = await _repository.getSubCategories(idP);
+  Future<Either<Failure, int>> call(
+    String name,
+    int idP,
+    String? shopId,
+  ) async {
+    final result = await _repository.getSubCategories(idP, shopId: shopId);
 
     if (result.isLeft()) {
       return Left(result.getLeft().toNullable()!);
@@ -22,7 +26,7 @@ class EnsureSubCategory {
     if (exinting.isNotEmpty) {
       return Right(exinting.first.id ?? 0);
     } else {
-      final newCategory = Category(name: name, parentId: idP);
+      final newCategory = Category(name: name, parentId: idP, shopId: shopId);
       return await _repository.addCategory(newCategory);
     }
   }

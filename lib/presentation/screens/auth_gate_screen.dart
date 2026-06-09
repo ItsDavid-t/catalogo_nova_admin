@@ -32,7 +32,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
     if (_catalogLoadedForUserId == userId) return;
     _catalogLoadedForUserId = userId;
     context.read<ProductCubit>().loadProducts();
-    context.read<CategoryCubit>().fetchMainCategories();
+    context.read<CategoryCubit>().fetchMainCategories(shopId: userId);
   }
 
   void _resetCatalogData() {
@@ -57,6 +57,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
           _loadedUserId = null;
           _catalogLoadedForUserId = null;
           _resetCatalogData();
+          Navigator.of(context).popUntil((route) => route.isFirst);
         }
       },
       child: BlocBuilder<AuthCubit, AuthState>(
@@ -110,9 +111,8 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
                             ),
                             const SizedBox(height: 12),
                             FilledButton(
-                              onPressed: () => _loadShopProfile(
-                                state.userSession.uuid,
-                              ),
+                              onPressed: () =>
+                                  _loadShopProfile(state.userSession.uuid),
                               child: const Text('Reintentar'),
                             ),
                           ],

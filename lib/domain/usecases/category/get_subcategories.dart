@@ -7,8 +7,10 @@ class GetSubCategories {
   final CategoryRepository _repository;
 
   GetSubCategories(this._repository);
-
-  Future<Either<Failure, List<Category>>> call(int parentId) async {
-    return await _repository.getSubCategories(parentId);
+  Future<Either<Failure, List<Category>>> call(
+    int parentId, {
+    String? shopId,
+  }) async {
+    return await _repository.getSubCategories(parentId, shopId: shopId);
   }
 }

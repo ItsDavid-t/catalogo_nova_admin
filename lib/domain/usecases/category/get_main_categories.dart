@@ -8,7 +8,7 @@ class GetMainCategories {
 
   GetMainCategories(this._repository);
 
-  Future<Either<Failure, List<Category>>> call() async {
-    return await _repository.getMainCategories();
+  Future<Either<Failure, List<Category>>> call({String? shopId}) async {
+    return await _repository.getMainCategories(shopId: shopId);
   }
 }

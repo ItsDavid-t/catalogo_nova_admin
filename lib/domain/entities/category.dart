@@ -4,21 +4,12 @@ class Category {
   final int? parentId;
   final String? shopId;
 
-  Category({
-    this.id,
-    this.parentId,
-    required this.name,
-    this.shopId,
-  });
+  Category({this.id, this.parentId, required this.name, this.shopId});
 
   Map<String, dynamic> toMap() {
-    final map = <String, dynamic>{
-      'id': id,
-      'name': name,
-      'parentId': parentId,
-    };
+    final map = <String, dynamic>{'id': id, 'name': name, 'parentId': parentId};
     if (shopId != null) {
-      map['shopId'] = shopId;
+      map['shop_id'] = shopId;
     }
     return map;
   }
@@ -32,12 +23,7 @@ class Category {
     );
   }
 
-  Category copyWith({
-    int? id,
-    String? name,
-    int? parentId,
-    String? shopId,
-  }) {
+  Category copyWith({int? id, String? name, int? parentId, String? shopId}) {
     return Category(
       id: id ?? this.id,
       name: name ?? this.name,

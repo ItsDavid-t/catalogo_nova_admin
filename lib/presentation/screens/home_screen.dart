@@ -3,6 +3,7 @@ import 'package:echo_stock/presentation/cubit/category/category_cubit.dart';
 import 'package:echo_stock/presentation/cubit/category/category_state.dart';
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
 import 'package:echo_stock/presentation/cubit/product/product_state.dart';
+import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
 import 'package:echo_stock/presentation/cubit/shop_profile/shop_profile_cubit.dart';
 import 'package:echo_stock/presentation/cubit/shop_profile/shop_profile_state.dart';
 import 'package:echo_stock/presentation/widgets/category_list.dart';
@@ -82,7 +83,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _refreshContent() async {
     await Future.wait([
       context.read<ProductCubit>().loadProducts(),
-      context.read<CategoryCubit>().fetchMainCategories(),
+      context.read<CategoryCubit>().fetchMainCategories(
+        shopId: context.read<AuthCubit>().currentSession?.uuid,
+      ),
     ]);
   }
 
@@ -250,7 +253,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: buildInlineErrorBanner(
                         message: categoryState.message,
                         onRetry: () =>
-                            context.read<CategoryCubit>().fetchMainCategories(),
+                            context.read<CategoryCubit>().fetchMainCategories(
+                              shopId: context
+                                  .read<AuthCubit>()
+                                  .currentSession
+                                  ?.uuid,
+                            ),
                       ),
                     );
                   }

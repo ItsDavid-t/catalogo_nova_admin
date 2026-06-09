@@ -1,5 +1,6 @@
 import 'package:echo_stock/domain/entities/product.dart';
 import 'package:echo_stock/presentation/cubit/category/category_cubit.dart';
+import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
 import 'package:echo_stock/presentation/cubit/category/category_state.dart';
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
 import 'package:echo_stock/presentation/cubit/product/product_state.dart';
@@ -27,7 +28,9 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
   void initState() {
     super.initState();
     context.read<ProductCubit>().loadArchiveProducts();
-    context.read<CategoryCubit>().fetchMainCategories();
+    context.read<CategoryCubit>().fetchMainCategories(
+      shopId: context.read<AuthCubit>().currentSession?.uuid,
+    );
   }
 
   @override

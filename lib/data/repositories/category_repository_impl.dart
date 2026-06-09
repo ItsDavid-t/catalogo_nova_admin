@@ -11,9 +11,13 @@ class CategoryRepositoryImpl implements CategoryRepository {
   CategoryRepositoryImpl(this._supabase);
 
   @override
-  Future<Either<Failure, List<Category>>> getAllCategories() async {
+  Future<Either<Failure, List<Category>>> getAllCategories({
+    String? shopId,
+  }) async {
     try {
-      final response = await _supabase.from('Category').select();
+      final response = shopId == null
+          ? await _supabase.from('Category').select()
+          : await _supabase.from('Category').select().eq('shop_id', shopId);
       final categories = (response as List)
           .map((e) => Category.fromMap(e))
           .toList();
@@ -28,13 +32,22 @@ class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   @override
-  Future<Either<Failure, List<Category>>> getMainCategories() async {
+  Future<Either<Failure, List<Category>>> getMainCategories({
+    String? shopId,
+  }) async {
     try {
-      final response = await _supabase
-          .from('Category')
-          .select()
-          .isFilter('parentId', null)
-          .order('name');
+      final response = shopId == null
+          ? await _supabase
+                .from('Category')
+                .select()
+                .isFilter('parentId', null)
+                .order('name')
+          : await _supabase
+                .from('Category')
+                .select()
+                .isFilter('parentId', null)
+                .eq('shop_id', shopId)
+                .order('name');
       final categories = (response as List)
           .map((e) => Category.fromMap(e))
           .toList();
@@ -49,13 +62,23 @@ class CategoryRepositoryImpl implements CategoryRepository {
   }
 
   @override
-  Future<Either<Failure, List<Category>>> getSubCategories(int parentId) async {
+  Future<Either<Failure, List<Category>>> getSubCategories(
+    int parentId, {
+    String? shopId,
+  }) async {
     try {
-      final response = await _supabase
-          .from('Category')
-          .select()
-          .eq('parentId', parentId)
-          .order('name');
+      final response = shopId == null
+          ? await _supabase
+                .from('Category')
+                .select()
+                .eq('parentId', parentId)
+                .order('name')
+          : await _supabase
+                .from('Category')
+                .select()
+                .eq('parentId', parentId)
+                .eq('shop_id', shopId)
+                .order('name');
       final categories = (response as List)
           .map((e) => Category.fromMap(e))
           .toList();

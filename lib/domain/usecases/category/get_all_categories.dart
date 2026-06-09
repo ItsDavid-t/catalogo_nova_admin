@@ -7,8 +7,7 @@ class GetAllCategories {
   final CategoryRepository _repository;
 
   GetAllCategories(this._repository);
-
-  Future<Either<Failure, List<Category>>> call() async {
-    return await _repository.getAllCategories();
+  Future<Either<Failure, List<Category>>> call({String? shopId}) async {
+    return await _repository.getAllCategories(shopId: shopId);
   }
 }

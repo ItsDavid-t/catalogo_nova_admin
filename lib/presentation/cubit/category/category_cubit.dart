@@ -44,10 +44,10 @@ class CategoryCubit extends Cubit<CategoryState> {
     );
   }
 
-  Future<void> fetchMainCategories() async {
+  Future<void> fetchMainCategories({String? shopId}) async {
     emit(CategoryLoading());
 
-    final result = await _getMainCategories();
+    final result = await _getMainCategories(shopId: shopId);
 
     result.fold(
       (failure) {
@@ -63,14 +63,14 @@ class CategoryCubit extends Cubit<CategoryState> {
     );
   }
 
-  Future<void> fetchSubCategories(int? parentId) async {
+  Future<void> fetchSubCategories(int? parentId, {String? shopId}) async {
     if (parentId == null) {
       emit(const CategorySubLoaded([]));
       return;
     }
     emit(CategoryLoading());
 
-    final result = await _getSubCategories(parentId);
+    final result = await _getSubCategories(parentId, shopId: shopId);
 
     result.fold(
       (failure) {
@@ -99,8 +99,12 @@ class CategoryCubit extends Cubit<CategoryState> {
     );
   }
 
-  Future<int> ensureSubCategory(String name, int parentId) async {
-    final result = await _ensureSubCategory(name, parentId);
+  Future<int> ensureSubCategory(
+    String name,
+    int parentId,
+    String? shopId,
+  ) async {
+    final result = await _ensureSubCategory(name, parentId, shopId);
 
     return result.fold((failure) {
       emit(CategoryError(failure.message));
@@ -121,9 +125,9 @@ class CategoryCubit extends Cubit<CategoryState> {
     );
   }
 
-  Future<void> loadMainFamilies() async {
+  Future<void> loadMainFamilies({String? shopId}) async {
     emit(CategoryLoading());
-    final result = await _getMainCategories();
+    final result = await _getMainCategories(shopId: shopId);
 
     result.fold(
       (failure) {

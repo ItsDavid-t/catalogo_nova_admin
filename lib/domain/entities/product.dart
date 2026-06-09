@@ -48,7 +48,7 @@ class Product {
       'createdAt': createdAt.toIso8601String(),
     };
     if (shopId != null) {
-      map['shopId'] = shopId;
+      map['shop_id'] = shopId;
     }
     return map;
   }
