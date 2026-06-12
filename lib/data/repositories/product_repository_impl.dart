@@ -15,9 +15,13 @@ class ProductRepositoryImpl implements ProductRepository {
 
   //Para obtener todos los productos
   @override
-  Future<Either<Failure, List<Product>>> getAllProducts() async {
+  Future<Either<Failure, List<Product>>> getAllProducts(String? shopId) async {
     try {
-      final response = await _superBaseClient.from('Product').select();
+      var query = _superBaseClient.from('Product').select();
+      if (shopId != null) {
+        query = query.eq('shop_id', shopId);
+      }
+      final response = await query;
       final List<Product> products = (response as List)
           .map((element) => Product.fromMap(element))
           .toList();

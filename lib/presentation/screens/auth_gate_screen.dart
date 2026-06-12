@@ -31,7 +31,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
   void _loadCatalogData(String userId) {
     if (_catalogLoadedForUserId == userId) return;
     _catalogLoadedForUserId = userId;
-    context.read<ProductCubit>().loadProducts();
+    context.read<ProductCubit>().loadProducts(shopId: userId);
     context.read<CategoryCubit>().fetchMainCategories(shopId: userId);
   }
 

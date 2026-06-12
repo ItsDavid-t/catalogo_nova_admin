@@ -22,6 +22,8 @@ class ProductCubit extends Cubit<ProductState> {
   final GetProductsByCategories _getProductsByCategories;
   final ArchiveProduct _archiveProduct;
 
+  String? _shopId;
+
   ProductCubit(
     this._getAllProducts,
     this._addProduct,
@@ -37,10 +39,14 @@ class ProductCubit extends Cubit<ProductState> {
     emit(ProductInitial());
   }
 
-  Future<void> loadProducts() async {
+  Future<void> loadProducts({String? shopId}) async {
+    if (shopId != null) {
+      _shopId = shopId;
+    }
+
     emit(ProductLoading(categoryId: null, isShowingOutOfStock: false));
 
-    final result = await _getAllProducts();
+    final result = await _getAllProducts(shopId: _shopId);
 
     result.fold((failure) => emit(ProductError(failure.message)), (products) {
       final filtered = _applyFilters(

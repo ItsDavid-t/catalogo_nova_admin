@@ -8,7 +8,7 @@ class GetAllProducts {
 
   GetAllProducts(this._repository);
 
-  Future<Either<Failure, List<Product>>> call() async {
-    return await _repository.getAllProducts();
+  Future<Either<Failure, List<Product>>> call({String? shopId}) async {
+    return await _repository.getAllProducts(shopId);
   }
 }

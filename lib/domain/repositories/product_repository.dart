@@ -4,7 +4,7 @@ import 'package:echo_stock/domain/entities/product.dart';
 import 'package:fpdart/fpdart.dart';
 
 abstract class ProductRepository {
-  Future<Either<Failure, List<Product>>> getAllProducts();
+  Future<Either<Failure, List<Product>>> getAllProducts(String? shopId);
   Future<Either<Failure, List<Product>>> getOutOfStockProducts();
   Future<Either<Failure, List<Product>>> getOutOfStockProductsByCategories(
     int categoryId,
