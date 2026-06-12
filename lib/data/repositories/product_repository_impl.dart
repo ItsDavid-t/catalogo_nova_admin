@@ -13,7 +13,7 @@ class ProductRepositoryImpl implements ProductRepository {
 
   ProductRepositoryImpl(this._superBaseClient);
 
-  //Para obtener todos los productos
+  ///Para obtener todos los productos
   @override
   Future<Either<Failure, List<Product>>> getAllProducts(String? shopId) async {
     try {
@@ -32,7 +32,7 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  //Para obtener los producto según su categoría
+  ///Para obtener los producto según su categoría
   @override
   Future<Either<Failure, List<Product>>> getProductsByCategories(
     int categoryId,
@@ -53,8 +53,7 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  //Para obtener apartir de una categoria principal todas sus subcategorias
-
+  ///Para obtener apartir de una categoria principal todas sus subcategorias
   Future<List<int>> _fetchCategoryAndDescendants(int categoryId) async {
     final categoryIds = <int>{categoryId};
     final queue = <int>[categoryId];
@@ -79,7 +78,7 @@ class ProductRepositoryImpl implements ProductRepository {
     return categoryIds.toList();
   }
 
-  //Para obtener los productos agotados
+  ///Para obtener los productos agotados
   @override
   Future<Either<Failure, List<Product>>> getOutOfStockProducts() async {
     try {
@@ -96,7 +95,7 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  //Para obtener los productos agotados pero esta vez filtrados por su categoria
+  ///Para obtener los productos agotados pero esta vez filtrados por su categoria
   @override
   Future<Either<Failure, List<Product>>> getOutOfStockProductsByCategories(
     int categoryId,
@@ -116,7 +115,7 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  //Para añadir un prodcuto le quito el id porq es autoincremental
+  ///Para añadir un prodcuto le quito el id porq es autoincremental
   @override
   Future<Either<Failure, Unit>> addProduct(Product product) async {
     try {
@@ -133,7 +132,7 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  //Aqui archivo un producto le paso el id y lo pongo en estado de reserva
+  ///Aqui archivo un producto le paso el id y lo pongo en estado de reserva
   @override
   Future<Either<Failure, Unit>> archiveProduct(int id) async {
     if (id <= 0) {
@@ -152,8 +151,8 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  //Para eliminar el producto pero tambien elimino la imagen para q no se llene el supabase
-  //y tambien elimino la categoria si este era el ultimo producto conesta
+  ///Para eliminar el producto pero tambien elimino la imagen para q no se llene el supabase
+  ///y tambien elimino la categoria si este era el ultimo producto conesta
   @override
   Future<Either<Failure, Unit>> deleteProduct(int id) async {
     if (id <= 0) {
@@ -184,7 +183,8 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  //
+  ///Elimina las categorias huerfanas(o sea las q no tienen productos vinculados),
+  /// de manera recursiva para eliminar tambien a la categoria padre si se queda sin hijos
   Future<void> _cleanupOrphanedCategory(int categoryId) async {
     final hasProducts = await _hasProductsForCategory(categoryId);
     final hasChildren = await _hasSubcategories(categoryId);
@@ -207,6 +207,7 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
+  /// Para saber si una categoria tiene algun productos vinculado
   Future<bool> _hasProductsForCategory(int categoryId) async {
     final response = await _superBaseClient
         .from('Product')
@@ -216,6 +217,7 @@ class ProductRepositoryImpl implements ProductRepository {
     return (response as List).isNotEmpty;
   }
 
+  /// Para saber si un productos tiene subcategorias vinculadas
   Future<bool> _hasSubcategories(int categoryId) async {
     final response = await _superBaseClient
         .from('Category')
@@ -225,6 +227,7 @@ class ProductRepositoryImpl implements ProductRepository {
     return (response as List).isNotEmpty;
   }
 
+  ///Para actualizar el producto(elimino el id para q el supabase no remplace el producto q ya estaba)
   @override
   Future<Either<Failure, Unit>> updateProduct(Product product) async {
     if (product.id == null) {
@@ -245,6 +248,7 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
+  ///Para subir la imagen del producto en forma binaria a la base datos
   @override
   Future<Either<Failure, String>> uploadProductImage(
     Uint8List bytes,
@@ -267,6 +271,7 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
+  ///Para eliminar la imagen usando su url publica
   Future<void> _deleteProductImage(String imgUrl) async {
     try {
       final uri = Uri.parse(imgUrl);

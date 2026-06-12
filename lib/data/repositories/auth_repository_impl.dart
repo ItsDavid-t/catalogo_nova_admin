@@ -11,7 +11,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   AuthRepositoryImpl(this._supabase);
 
-  //Inicio de sesion usando el email y la contraseña
+  ///Inicio de sesion usando el email y la contraseña
   @override
   Future<Either<Failure, UserSession>> signIn({
     required String email,
@@ -36,7 +36,7 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  //Registrase usando email y contraseña
+  ///Registrase usando email y contraseña
   @override
   Future<Either<Failure, UserSession>> signUp({
     required String email,
@@ -68,7 +68,7 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  //Cerrar session
+  ///Cerrar session
   @override
   Future<Either<Failure, Unit>> signOut() async {
     try {
@@ -83,7 +83,7 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  //Obtener la session actual , asi el user no tiene q registrarse de nuevo
+  ///Obtener la session actual , asi el user no tiene q registrarse de nuevo
   @override
   Future<Either<Failure, UserSession?>> getCurrentSession() async {
     try {
@@ -99,7 +99,7 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  //Escucha los cambios en el estado de autentificacion
+  ///Escucha los cambios en el estado de autentificacion
   @override
   Stream<UserSession?> watchAuthSession() {
     return _supabase.auth.onAuthStateChange.map((event) {
@@ -111,12 +111,12 @@ class AuthRepositoryImpl implements AuthRepository {
     });
   }
 
-  //Para convertir un User a un UserSession
+  ///Para convertir un User a un UserSession
   UserSession _toSession(User user) {
     return UserSession(user.email ?? '', user.id);
   }
 
-  //convierte los errores de supabase en mensajes mas legibles para mi
+  ///convierte los errores de supabase en mensajes mas legibles para mi
   Failure _mapAuthException(AuthException exception) {
     final code = exception.code?.toLowerCase() ?? '';
     final message = exception.message.toLowerCase();

@@ -11,6 +11,7 @@ class ShopProfileRepositoryImpl implements ShopProfileRepository {
 
   ShopProfileRepositoryImpl(this._supabase);
 
+  ///Para obtener la tienda de cada usuario mediante su id
   @override
   Future<Either<Failure, ShopProfile?>> getByUserId(String userId) async {
     try {

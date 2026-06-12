@@ -14,6 +14,7 @@ class SaleRepositoryImpl implements SaleRepository {
   static const _saleSelect =
       '*, sale_item(id, sale_id, product_id, quantity, price_at_sale)';
 
+  ///Obtengo las ventas de cada tienda(filtro por shop_id, y las ordeno por fecha de creada descendentemente)
   @override
   Future<Either<Failure, List<Sale>>> getSalesByShop(String shopId) async {
     try {
@@ -32,6 +33,7 @@ class SaleRepositoryImpl implements SaleRepository {
     }
   }
 
+  ///Para crear una nueva venta (le borro el id porq el id en mi base de datos es autoincremental)
   @override
   Future<Either<Failure, Sale>> createSale(Sale sale) async {
     if (sale.items.isEmpty) {
