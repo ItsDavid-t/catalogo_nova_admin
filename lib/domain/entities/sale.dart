@@ -39,7 +39,7 @@ class Sale {
       id: map['id'] as int?,
       shopId: map['shop_id'] as String,
       totalAmount: _toDouble(map['total_amount']),
-      paymentMethod: map['payment_method'] as String,
+      paymentMethod: (map['payment_method'] as String?) ?? 'venta',
       createdAt:
           DateTime.tryParse((map['created_at'] ?? '') as String) ??
           DateTime.now(),

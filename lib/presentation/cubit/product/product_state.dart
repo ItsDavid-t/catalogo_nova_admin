@@ -7,6 +7,7 @@ enum ProductOption {
   statusAvailable,
   statusReserved,
   statusOutOfStock,
+  stockLow,
 }
 
 abstract class ProductState extends Equatable {
@@ -18,11 +19,16 @@ abstract class ProductState extends Equatable {
 class ProductLoading extends ProductState {
   final int? categoryId;
   final bool isShowingOutOfStock;
+  final bool isLowStock;
 
-  const ProductLoading({this.categoryId, this.isShowingOutOfStock = false});
+  const ProductLoading({
+    this.categoryId,
+    this.isShowingOutOfStock = false,
+    this.isLowStock = false,
+  });
 
   @override
-  List<Object?> get props => [categoryId, isShowingOutOfStock];
+  List<Object?> get props => [categoryId, isShowingOutOfStock, isLowStock];
 }
 
 class ProductInitial extends ProductState {}
@@ -37,6 +43,7 @@ class ProductLoaded extends ProductState {
   final ProductOption sortOption;
   final bool isShowingOutOfStock;
   final bool isShowingReserved;
+  final bool isLowStockFilter;
 
   const ProductLoaded(
     this.products,
@@ -48,6 +55,7 @@ class ProductLoaded extends ProductState {
     this.sortOption,
     this.isShowingOutOfStock,
     this.isShowingReserved,
+    this.isLowStockFilter,
   );
   @override
   List<Object?> get props => [
@@ -60,6 +68,7 @@ class ProductLoaded extends ProductState {
     sortOption,
     isShowingOutOfStock,
     isShowingReserved,
+    isLowStockFilter,
   ];
 
   ProductLoaded copyWith({
@@ -72,6 +81,7 @@ class ProductLoaded extends ProductState {
     ProductOption? sortOption,
     bool? isShowingOutOfStock,
     bool? isShowingReserved,
+    bool? isLowStockFilter,
   }) {
     return ProductLoaded(
       products ?? this.products,
@@ -85,6 +95,7 @@ class ProductLoaded extends ProductState {
       sortOption ?? this.sortOption,
       isShowingOutOfStock ?? this.isShowingOutOfStock,
       isShowingReserved ?? this.isShowingReserved,
+      isLowStockFilter ?? this.isLowStockFilter,
     );
   }
 }

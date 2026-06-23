@@ -20,6 +20,11 @@ class ProductCard extends StatelessWidget {
       ProductStatus.reserved => Colors.orange,
       ProductStatus.outOfStock => Colors.red,
     };
+    final stockColor = product.isEffectivelyOutOfStock
+        ? Colors.red
+        : product.isLowStock
+        ? Colors.orange
+        : Colors.grey;
 
     return Card(
       elevation: 4,
@@ -33,7 +38,6 @@ class ProductCard extends StatelessWidget {
           product.name,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 3),
           child: Column(
@@ -41,10 +45,12 @@ class ProductCard extends StatelessWidget {
             children: [
               Text(
                 'Estado: ${product.statusLabel}',
-                style: TextStyle(
-                  color: statusColor,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: statusColor, fontSize: 12),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Stock: ${product.stock}${product.isLowStock ? ' (poco stock)' : ''}',
+                style: TextStyle(color: stockColor, fontSize: 12),
               ),
               const SizedBox(height: 4),
               if ((product.classification ?? '').trim().isNotEmpty)
@@ -52,10 +58,33 @@ class ProductCard extends StatelessWidget {
                   'Clasificación: ${product.classification}',
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  if (product.costPrice > 0)
+                    Text(
+                      'Costo: \$${product.costPrice.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 12, color: Colors.blue),
+                    ),
+                  if (product.sellPrice > 0) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      'Venta: \$${product.sellPrice.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 12, color: Colors.green),
+                    ),
+                  ],
+                ],
+              ),
             ],
           ),
         ),
-        trailing: onReadonly ? null : Icon(Icons.circle, size: 14, color: statusColor),
+        trailing: onReadonly
+            ? null
+            : product.isEffectivelyOutOfStock
+            ? const Icon(Icons.remove_shopping_cart, color: Colors.red)
+            : product.isLowStock
+            ? const Icon(Icons.warning, color: Colors.orange)
+            : Icon(Icons.circle, size: 14, color: statusColor),
       ),
     );
   }

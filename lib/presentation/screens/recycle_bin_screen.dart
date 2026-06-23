@@ -143,8 +143,8 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
                       selectedCategoryId: idSelected,
                       onCategorySelected: (category) {
                         if (category.id == idSelected) {
-                          context.read<ProductCubit>().loadOutOfStockProducts();
-                        } else {
+                          context.read<ProductCubit>().loadArchiveProducts();
+                        } else if (category.id != null) {
                           context.read<ProductCubit>().loadProductsByCategories(
                             category.id,
                           );

@@ -20,4 +20,9 @@ abstract class ProductRepository {
   Future<Either<Failure, List<Product>>> getProductsByCategories(
     int categoryId,
   );
+  Future<Either<Failure, Product>> getProductById(int id);
+  Future<Either<Failure, Unit>> decrementProductStock(
+    int productId,
+    int quantity,
+  );
 }

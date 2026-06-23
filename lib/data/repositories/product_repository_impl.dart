@@ -85,7 +85,7 @@ class ProductRepositoryImpl implements ProductRepository {
       final response = await _superBaseClient
           .from('Product')
           .select()
-          .eq('status', 'outOfStock');
+          .or('status.eq.outOfStock,stock.lte.0');
       final List<Product> products = (response as List)
           .map((element) => Product.fromMap(element))
           .toList();
@@ -269,6 +269,47 @@ class ProductRepositoryImpl implements ProductRepository {
       developer.log('ERROR DE SUPABASE STORAGE: $e');
       return Left(DatabaseFailure('Error al subir la imagen'));
     }
+  }
+
+  @override
+  Future<Either<Failure, Product>> getProductById(int id) async {
+    try {
+      final response = await _superBaseClient
+          .from('Product')
+          .select()
+          .eq('id', id)
+          .single();
+      return Right(Product.fromMap(response));
+    } catch (e) {
+      developer.log('ERROR DE SUPABASE: $e');
+      return Left(DatabaseFailure('Error de conexión'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> decrementProductStock(
+    int productId,
+    int quantity,
+  ) async {
+    final productResult = await getProductById(productId);
+    return await productResult.fold(
+      (failure) => Future.value(Left(failure)),
+      (product) async {
+        if (product.stock < quantity) {
+          return Left(
+            ValidationFailure(
+              'Stock insuficiente para "${product.name}" (disponible: ${product.stock})',
+            ),
+          );
+        }
+
+        final updated = product
+            .copyWith(stock: product.stock - quantity)
+            .withSyncedStockStatus();
+
+        return updateProduct(updated);
+      },
+    );
   }
 
   ///Para eliminar la imagen usando su url publica

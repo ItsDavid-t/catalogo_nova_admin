@@ -30,8 +30,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on AuthException catch (e) {
       developer.log('AUTH signIn: ${e.message}');
       return Left(_mapAuthException(e));
-    } catch (e) {
-      developer.log('AUTH signIn error: $e');
+    } catch (e, st) {
+      developer.log('AUTH signIn error', error: e, stackTrace: st);
       return const Left(NetworkFailure('Error de conexión'));
     }
   }
@@ -62,8 +62,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on AuthException catch (e) {
       developer.log('AUTH signUp: ${e.message}');
       return Left(_mapAuthException(e));
-    } catch (e) {
-      developer.log('AUTH signUp error: $e');
+    } catch (e, st) {
+      developer.log('AUTH signUp error', error: e, stackTrace: st);
       return const Left(NetworkFailure('Error de conexión'));
     }
   }
@@ -77,8 +77,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on AuthException catch (e) {
       developer.log('AUTH signOut: ${e.message}');
       return Left(_mapAuthException(e));
-    } catch (e) {
-      developer.log('AUTH signOut error: $e');
+    } catch (e, st) {
+      developer.log('AUTH signOut error', error: e, stackTrace: st);
       return const Left(NetworkFailure('Error de conexión'));
     }
   }
@@ -93,8 +93,8 @@ class AuthRepositoryImpl implements AuthRepository {
         return const Right(null);
       }
       return Right(_toSession(user));
-    } catch (e) {
-      developer.log('AUTH getCurrentSession error: $e');
+    } catch (e, st) {
+      developer.log('AUTH getCurrentSession error', error: e, stackTrace: st);
       return const Left(NetworkFailure('Error de conexión'));
     }
   }
@@ -116,7 +116,7 @@ class AuthRepositoryImpl implements AuthRepository {
     return UserSession(user.email ?? '', user.id);
   }
 
-  ///convierte los errores de supabase en mensajes mas legibles para mi
+  /// Convierte errores de Supabase en errores de dominio
   Failure _mapAuthException(AuthException exception) {
     final code = exception.code?.toLowerCase() ?? '';
     final message = exception.message.toLowerCase();

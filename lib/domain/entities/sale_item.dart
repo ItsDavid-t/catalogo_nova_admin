@@ -4,6 +4,7 @@ class SaleItem {
   final int productId;
   final int quantity;
   final double priceAtSale;
+  final double costAtSale;
 
   const SaleItem({
     this.id,
@@ -11,6 +12,7 @@ class SaleItem {
     required this.productId,
     required this.quantity,
     required this.priceAtSale,
+    this.costAtSale = 0,
   });
 
   Map<String, dynamic> toMap() {
@@ -20,6 +22,7 @@ class SaleItem {
       'product_id': productId,
       'quantity': quantity,
       'price_at_sale': priceAtSale,
+      'cost_at_sale': costAtSale,
     };
   }
 
@@ -30,6 +33,7 @@ class SaleItem {
       productId: map['product_id'] as int,
       quantity: map['quantity'] as int,
       priceAtSale: _toDouble(map['price_at_sale']),
+      costAtSale: _toDouble(map['cost_at_sale']),
     );
   }
 

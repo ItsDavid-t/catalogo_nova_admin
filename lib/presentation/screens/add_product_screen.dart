@@ -26,6 +26,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _classificationController = TextEditingController();
   final _imgUrlController = TextEditingController();
   final _newCategoryController = TextEditingController();
+  final _costPriceController = TextEditingController();
+  final _sellPriceController = TextEditingController();
+  final _stockController = TextEditingController();
+  final _lowStockAlertController = TextEditingController();
   Category? _selectedFamily;
   ProductStatus? _selectedStatus;
   Uint8List? _selectedImageBytes;
@@ -39,9 +43,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _descriptionController.text = widget.product!.description ?? '';
       _classificationController.text = widget.product!.classification ?? '';
       _imgUrlController.text = widget.product!.imgUrl;
+      _costPriceController.text = widget.product!.costPrice.toString();
+      _sellPriceController.text = widget.product!.sellPrice.toString();
+      _stockController.text = widget.product!.stock.toString();
+      _lowStockAlertController.text = widget.product!.lowStockAlert.toString();
       _selectedStatus = widget.product!.status;
     } else {
       _selectedStatus = ProductStatus.available;
+      _costPriceController.text = '0.0';
+      _sellPriceController.text = '0.0';
+      _stockController.text = '0';
+      _lowStockAlertController.text = '0';
     }
     final currentUserId = context.read<AuthCubit>().currentSession?.uuid;
     context.read<CategoryCubit>().fetchMainCategories(shopId: currentUserId);
@@ -54,6 +66,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _classificationController.dispose();
     _imgUrlController.dispose();
     _newCategoryController.dispose();
+    _costPriceController.dispose();
+    _sellPriceController.dispose();
+    _stockController.dispose();
+    _lowStockAlertController.dispose();
     super.dispose();
   }
 
@@ -103,6 +119,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
       }
     }
 
+    final stock = int.tryParse(_stockController.text) ?? 0;
+    final lowStockAlert = int.tryParse(_lowStockAlertController.text) ?? 0;
+    var status = _selectedStatus!;
+    if (stock <= 0) {
+      status = ProductStatus.outOfStock;
+    }
+
     final product = Product(
       id: widget.product?.id,
       name: _nameController.text,
@@ -111,8 +134,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
           : _descriptionController.text,
       classification: classificationText.isEmpty ? null : classificationText,
       categoryId: idCategory,
+      stock: stock,
+      lowStockAlert: lowStockAlert,
+      costPrice: double.tryParse(_costPriceController.text) ?? 0.0,
+      sellPrice: double.tryParse(_sellPriceController.text) ?? 0.0,
       imgUrl: imgUrl,
-      status: _selectedStatus!,
+      status: status,
       createdAt: widget.product?.createdAt ?? DateTime.now(),
       shopId: currentUserId,
     );
@@ -406,6 +433,100 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
+                  ],
+                ),
+                const SizedBox(height: 24),
+                _buildSection(
+                  title: 'Precios',
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _costPriceController,
+                            decoration: const InputDecoration(
+                              labelText: 'Precio de costo',
+                              prefixIcon: Icon(Icons.attach_money),
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return null;
+                              if (double.tryParse(v) == null) {
+                                return 'Debe ser un número válido';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _sellPriceController,
+                            decoration: const InputDecoration(
+                              labelText: 'Precio de venta',
+                              prefixIcon: Icon(Icons.sell),
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return null;
+                              if (double.tryParse(v) == null) {
+                                return 'Debe ser un número válido';
+                              }
+                              return null;
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                _buildSection(
+                  title: 'Inventario',
+                  children: [
+                    TextFormField(
+                      controller: _stockController,
+                      decoration: const InputDecoration(
+                        labelText: 'Stock actual',
+                        prefixIcon: Icon(Icons.layers),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) {
+                          return 'Campo obligatorio';
+                        }
+                        if (int.tryParse(v) == null) {
+                          return 'Debe ser un número válido';
+                        }
+                        return null;
+                      },
+                      onChanged: (value) {
+                        final stock = int.tryParse(value) ?? 0;
+                        if (stock <= 0 && mounted) {
+                          setState(() {
+                            _selectedStatus = ProductStatus.outOfStock;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 15),
+                    TextFormField(
+                      controller: _lowStockAlertController,
+                      decoration: const InputDecoration(
+                        labelText: 'Stock mínimo (alerta)',
+                        prefixIcon: Icon(Icons.notification_important),
+                      ),
+                      keyboardType: TextInputType.number,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) {
+                          return 'Campo obligatorio';
+                        }
+                        if (int.tryParse(v) == null) {
+                          return 'Debe ser un número válido';
+                        }
+                        return null;
+                      },
+                    ),
                   ],
                 ),
                 const SizedBox(height: 24),

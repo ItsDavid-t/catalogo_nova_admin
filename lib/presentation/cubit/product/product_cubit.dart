@@ -5,7 +5,6 @@ import 'package:echo_stock/domain/usecases/product/add_product.dart';
 import 'package:echo_stock/domain/usecases/product/archive_product.dart';
 import 'package:echo_stock/domain/usecases/product/delete_product.dart';
 import 'package:echo_stock/domain/usecases/product/get_all_products.dart';
-import 'package:echo_stock/domain/usecases/product/get_out_of_stock_product.dart';
 import 'package:echo_stock/domain/usecases/product/get_products_by_categories.dart';
 import 'package:echo_stock/domain/usecases/product/upload_product_image.dart';
 import 'package:echo_stock/domain/usecases/product/upgrate_product.dart';
@@ -16,7 +15,6 @@ class ProductCubit extends Cubit<ProductState> {
   final GetAllProducts _getAllProducts;
   final AddProduct _addProduct;
   final UpgrateProduct _upgrateProduct;
-  final GetOutOfStockProduct _getOutOfStockProduct;
   final UploadProductImage _uploadProductImage;
   final DeleteProduct _deleteProduct;
   final GetProductsByCategories _getProductsByCategories;
@@ -28,7 +26,6 @@ class ProductCubit extends Cubit<ProductState> {
     this._getAllProducts,
     this._addProduct,
     this._upgrateProduct,
-    this._getOutOfStockProduct,
     this._uploadProductImage,
     this._deleteProduct,
     this._getProductsByCategories,
@@ -56,6 +53,7 @@ class ProductCubit extends Cubit<ProductState> {
         [],
         ProductOption.nameAz,
         false,
+        false,
       );
 
       emit(
@@ -67,6 +65,7 @@ class ProductCubit extends Cubit<ProductState> {
           [],
           false,
           ProductOption.nameAz,
+          false,
           false,
           false,
         ),
@@ -94,6 +93,7 @@ class ProductCubit extends Cubit<ProductState> {
           [],
           ProductOption.nameAz,
           false,
+          false,
         );
         emit(
           ProductLoaded(
@@ -104,6 +104,7 @@ class ProductCubit extends Cubit<ProductState> {
             [],
             true,
             ProductOption.nameAz,
+            false,
             false,
             false,
           ),
@@ -123,6 +124,7 @@ class ProductCubit extends Cubit<ProductState> {
         currentState.selectedStatus,
         sortOption,
         currentState.isShowingOutOfStock,
+        currentState.isLowStockFilter,
       );
 
       emit(
@@ -149,6 +151,7 @@ class ProductCubit extends Cubit<ProductState> {
         currentState.selectedStatus,
         currentState.sortOption,
         currentState.isShowingOutOfStock,
+        currentState.isLowStockFilter,
       );
       emit(currentState.copyWith(filteredProducts: filtered));
     }
@@ -156,19 +159,23 @@ class ProductCubit extends Cubit<ProductState> {
 
   Future<void> loadOutOfStockProducts() async {
     emit(ProductLoading(categoryId: null, isShowingOutOfStock: true));
-    final result = await _getOutOfStockProduct();
+    final result = await _getAllProducts(shopId: _shopId);
     result.fold((failure) => emit(ProductError(failure.message)), (products) {
+      final outOfStockProducts = products
+          .where((product) => product.isEffectivelyOutOfStock)
+          .toList();
       final filtered = _applyFilters(
-        products,
+        outOfStockProducts,
         null,
         [],
         [ProductStatus.outOfStock],
         ProductOption.nameAz,
         true,
+        false,
       );
       emit(
         ProductLoaded(
-          products,
+          outOfStockProducts,
           filtered,
           null,
           [],
@@ -177,6 +184,7 @@ class ProductCubit extends Cubit<ProductState> {
           ProductOption.nameAz,
           true,
           false,
+          false,
         ),
       );
     });
@@ -184,19 +192,23 @@ class ProductCubit extends Cubit<ProductState> {
 
   Future<void> loadArchiveProducts() async {
     emit(ProductLoading(categoryId: null, isShowingOutOfStock: false));
-    final result = await _getAllProducts();
+    final result = await _getAllProducts(shopId: _shopId);
     result.fold((failure) => emit(ProductError(failure.message)), (products) {
+      final archived = products
+          .where((product) => product.status == ProductStatus.reserved)
+          .toList();
       final filtered = _applyFilters(
-        products,
+        archived,
         null,
         [],
         [ProductStatus.reserved],
         ProductOption.nameAz,
         false,
+        false,
       );
       emit(
         ProductLoaded(
-          products,
+          archived,
           filtered,
           null,
           [],
@@ -205,6 +217,7 @@ class ProductCubit extends Cubit<ProductState> {
           ProductOption.nameAz,
           false,
           true,
+          false,
         ),
       );
     });
@@ -217,6 +230,7 @@ class ProductCubit extends Cubit<ProductState> {
     List<ProductStatus> statuses,
     ProductOption sortOption,
     bool isShowingOutOfStock,
+    bool lowStock,
   ) {
     var sortList = [...products];
 
@@ -231,15 +245,27 @@ class ProductCubit extends Cubit<ProductState> {
     }
 
     if (statuses.isNotEmpty) {
-      sortList = sortList.where((p) => statuses.contains(p.status)).toList();
+      sortList = sortList
+          .where(
+            (p) =>
+                statuses.contains(p.status) ||
+                (statuses.contains(ProductStatus.outOfStock) &&
+                    p.isEffectivelyOutOfStock),
+          )
+          .toList();
     } else if (!isShowingOutOfStock) {
       sortList = sortList
           .where(
             (p) =>
                 p.status != ProductStatus.outOfStock &&
-                p.status != ProductStatus.reserved,
+                p.status != ProductStatus.reserved &&
+                !p.isEffectivelyOutOfStock,
           )
           .toList();
+    }
+
+    if (lowStock) {
+      sortList = sortList.where((p) => p.isLowStock).toList();
     }
 
     switch (sortOption) {
@@ -265,10 +291,13 @@ class ProductCubit extends Cubit<ProductState> {
         break;
       case ProductOption.statusOutOfStock:
         sortList.sort(
-          (a, b) => (a.status == ProductStatus.outOfStock ? 0 : 1).compareTo(
-            (b.status == ProductStatus.outOfStock ? 0 : 1),
+          (a, b) => (a.isEffectivelyOutOfStock ? 0 : 1).compareTo(
+            (b.isEffectivelyOutOfStock ? 0 : 1),
           ),
         );
+        break;
+      case ProductOption.stockLow:
+        sortList.sort((a, b) => a.stock.compareTo(b.stock));
         break;
     }
 
@@ -285,6 +314,7 @@ class ProductCubit extends Cubit<ProductState> {
         statusList,
         currentState.sortOption,
         currentState.isShowingOutOfStock,
+        currentState.isLowStockFilter,
       );
       emit(
         currentState.copyWith(
@@ -305,6 +335,7 @@ class ProductCubit extends Cubit<ProductState> {
         currentState.selectedStatus,
         currentState.sortOption,
         currentState.isShowingOutOfStock,
+        currentState.isLowStockFilter,
       );
       emit(
         currentState.copyWith(
@@ -315,8 +346,40 @@ class ProductCubit extends Cubit<ProductState> {
     }
   }
 
+  void toggleLowStockFilter(ProductOption sortOption) {
+    final currentState = state;
+
+    if (currentState is ProductLoaded) {
+      final newValue = !currentState.isLowStockFilter;
+      final effectiveSortOption = newValue
+          ? sortOption
+          : currentState.sortOption == ProductOption.stockLow
+          ? ProductOption.nameAz
+          : currentState.sortOption;
+
+      final filtered = _applyFilters(
+        currentState.products,
+        currentState.selectedCategoryId,
+        currentState.selectedClassification,
+        currentState.selectedStatus,
+        effectiveSortOption,
+        currentState.isShowingOutOfStock,
+        newValue,
+      );
+
+      emit(
+        currentState.copyWith(
+          isLowStockFilter: newValue,
+          filteredProducts: filtered,
+          sortOption: effectiveSortOption,
+        ),
+      );
+    }
+  }
+
   Future<void> addProduct(Product product) async {
-    final result = await _addProduct(product);
+    final syncedProduct = product.withSyncedStockStatus();
+    final result = await _addProduct(syncedProduct);
     result.fold((failure) => emit(ProductError(failure.message)), (_) {
       emit(const ProductActionSucces('Producto agregado correctamente'));
       loadProducts();
@@ -324,7 +387,8 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> updateProduct(Product product) async {
-    final result = await _upgrateProduct(product);
+    final syncedProduct = product.withSyncedStockStatus();
+    final result = await _upgrateProduct(syncedProduct);
     result.fold((failure) => emit(ProductError(failure.message)), (_) {
       final previousState = state;
       emit(const ProductActionSucces('Producto actualizado correctamente'));
@@ -349,7 +413,9 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> markAsOutOfStock(Product product) async {
-    await changeProductStatus(product, ProductStatus.outOfStock);
+    await updateProduct(
+      product.copyWith(stock: 0, status: ProductStatus.outOfStock),
+    );
   }
 
   Future<void> changeProductStatus(

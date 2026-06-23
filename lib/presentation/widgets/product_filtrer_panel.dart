@@ -25,6 +25,8 @@ class _ProductFiltrerPanelState extends State<ProductFiltrerPanel> {
         return 'Reservado primero';
       case ProductOption.statusOutOfStock:
         return 'Sin stock primero';
+      case ProductOption.stockLow:
+        return 'Stock menor';
     }
   }
 
@@ -82,6 +84,26 @@ class _ProductFiltrerPanelState extends State<ProductFiltrerPanel> {
               ),
               const SizedBox(height: 8),
               Divider(color: Theme.of(context).dividerColor.withAlpha(179)),
+              const SizedBox(height: 12),
+              Card(
+                elevation: 0,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: SwitchListTile(
+                  title: const Text('Poco Stock'),
+                  subtitle: const Text(
+                    'Mostrar solo productos por debajo del mínimo',
+                  ),
+                  value: productLoaded.isLowStockFilter,
+                  onChanged: (_) {
+                    context.read<ProductCubit>().toggleLowStockFilter(
+                      ProductOption.stockLow,
+                    );
+                  },
+                ),
+              ),
               const SizedBox(height: 12),
               Card(
                 elevation: 0,

@@ -2,6 +2,8 @@ import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
 import 'package:echo_stock/presentation/screens/home_screen.dart';
 import 'package:echo_stock/presentation/screens/recycle_bin_screen.dart';
+import 'package:echo_stock/presentation/screens/finance_screen.dart';
+import 'package:echo_stock/presentation/screens/new_sale_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -44,12 +46,38 @@ class CustomDrawer extends StatelessWidget {
           ),
           ListTile(
             leading: Icon(
+              Icons.point_of_sale,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            title: const Text('Nueva Venta'),
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const NewSaleScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(
+              Icons.monetization_on,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            title: Text("Finanzas"),
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const FinanceScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(
               Icons.delete_outline,
               color: Theme.of(context).colorScheme.primary,
             ),
             title: Text("Papelera de reciclaje"),
             onTap: () {
-              context.read<ProductCubit>().loadOutOfStockProducts();
+              context.read<ProductCubit>().loadArchiveProducts();
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(

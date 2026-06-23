@@ -232,10 +232,13 @@ class _HomeScreenState extends State<HomeScreen> {
       body: BlocBuilder<ProductCubit, ProductState>(
         builder: (context, productState) {
           int? idSelected;
+          bool isLowerStock = false;
           if (productState is ProductLoaded) {
             idSelected = productState.selectedCategoryId;
+            isLowerStock = productState.isLowStockFilter;
           } else if (productState is ProductLoading) {
             idSelected = productState.categoryId;
+            isLowerStock = productState.isLowStock;
           }
           return Column(
             children: [
@@ -297,6 +300,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     return CategoryList(
                       categories: categoryState.categories,
                       selectedCategoryId: idSelected,
+                      isLowStockSelected: isLowerStock,
+                      onLowStockSelected: () => context
+                          .read<ProductCubit>()
+                          .toggleLowStockFilter(ProductOption.stockLow),
                       onCategorySelected: (category) {
                         if (category.id == idSelected) {
                           context.read<ProductCubit>().loadProducts();
