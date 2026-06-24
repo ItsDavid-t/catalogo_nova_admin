@@ -32,4 +32,47 @@ void main() {
     expect(result.grossProfit, 5000);
     expect(result.grossMarginPercent, 25);
   });
+
+  test('Calcula correctamente ingresos, costos y ganacia', () async {
+    // Preparar datos
+    final useCase = CalculateProfitLoss();
+
+    // Ejecutar
+    final result = await useCase([]);
+
+    // Comprobar
+    expect(result.totalRevenue, isEmpty);
+    expect(result.totalCost, isEmpty);
+    expect(result.grossProfit, isEmpty);
+    expect(result.grossMarginPercent, isEmpty);
+  });
+
+  test('Calcula correctamente ingresos, costos y ganacia', () async {
+    // Preparar datos
+    final sale = Sale(
+      shopId: 'shop1',
+      totalAmount: 20000,
+      paymentMethod: 'cash',
+      createdAt: DateTime.now(),
+      items: [
+        SaleItem(
+          saleId: 1,
+          productId: 1,
+          quantity: 5,
+          priceAtSale: 20000,
+          costAtSale: 15000,
+        ),
+      ],
+    );
+    final useCase = CalculateProfitLoss();
+
+    // Ejecutar
+    final result = await useCase([sale]);
+
+    // Comprobar
+    expect(result.totalRevenue, 20000);
+    expect(result.totalCost, 15000);
+    expect(result.grossProfit, 5000);
+    expect(result.grossMarginPercent, 25);
+  });
 }

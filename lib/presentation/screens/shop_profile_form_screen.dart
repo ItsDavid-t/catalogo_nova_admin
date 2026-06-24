@@ -38,7 +38,7 @@ class _ShopProfileFormScreenState extends State<ShopProfileFormScreen> {
 
     final authState = context.read<AuthCubit>().state;
     final userId = authState is AuthAuthenticated
-        ? authState.userSession.uuid
+        ? authState.userSession.userId
         : widget.userId;
 
     final profile = ShopProfile(
@@ -72,9 +72,9 @@ class _ShopProfileFormScreenState extends State<ShopProfileFormScreen> {
       body: BlocConsumer<ShopProfileCubit, ShopProfileState>(
         listener: (context, state) {
           if (state is ShopProfileFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
         builder: (context, state) {
@@ -141,8 +141,9 @@ class _ShopProfileFormScreenState extends State<ShopProfileFormScreen> {
                       final normalized = telegram.startsWith('@')
                           ? telegram.substring(1)
                           : telegram;
-                      final isValid = RegExp(r'^[a-zA-Z0-9_]{5,}$')
-                          .hasMatch(normalized);
+                      final isValid = RegExp(
+                        r'^[a-zA-Z0-9_]{5,}$',
+                      ).hasMatch(normalized);
                       if (!isValid) {
                         return 'Usuario invalido de Telegram';
                       }
@@ -192,4 +193,3 @@ class _ShopProfileFormScreenState extends State<ShopProfileFormScreen> {
     );
   }
 }
-

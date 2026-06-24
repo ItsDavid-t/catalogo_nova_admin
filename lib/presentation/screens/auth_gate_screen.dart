@@ -49,7 +49,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
           current is AuthFailure,
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          _loadShopProfile(state.userSession.uuid);
+          _loadShopProfile(state.userSession.userId);
           return;
         }
 
@@ -69,14 +69,14 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
           }
 
           if (state is AuthAuthenticated) {
-            _loadShopProfile(state.userSession.uuid);
+            _loadShopProfile(state.userSession.userId);
             return BlocConsumer<ShopProfileCubit, ShopProfileState>(
               listenWhen: (previous, current) =>
                   current is ShopProfileLoaded || current is ShopProfileSaved,
               listener: (context, shopState) {
                 if (shopState is ShopProfileLoaded ||
                     shopState is ShopProfileSaved) {
-                  _loadCatalogData(state.userSession.uuid);
+                  _loadCatalogData(state.userSession.userId);
                 }
               },
               builder: (context, shopState) {
@@ -93,7 +93,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
 
                 if (shopState is ShopProfileLoaded ||
                     shopState is ShopProfileSaved) {
-                  _loadCatalogData(state.userSession.uuid);
+                  _loadCatalogData(state.userSession.userId);
                   return const HomeScreen();
                 }
 
@@ -112,7 +112,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
                             const SizedBox(height: 12),
                             FilledButton(
                               onPressed: () =>
-                                  _loadShopProfile(state.userSession.uuid),
+                                  _loadShopProfile(state.userSession.userId),
                               child: const Text('Reintentar'),
                             ),
                           ],

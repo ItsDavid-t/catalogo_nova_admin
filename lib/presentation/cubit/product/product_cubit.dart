@@ -378,7 +378,7 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> addProduct(Product product) async {
-    final syncedProduct = product.withSyncedStockStatus();
+    final syncedProduct = product.normalize();
     final result = await _addProduct(syncedProduct);
     result.fold((failure) => emit(ProductError(failure.message)), (_) {
       emit(const ProductActionSucces('Producto agregado correctamente'));
@@ -387,7 +387,7 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> updateProduct(Product product) async {
-    final syncedProduct = product.withSyncedStockStatus();
+    final syncedProduct = product.normalize();
     final result = await _upgrateProduct(syncedProduct);
     result.fold((failure) => emit(ProductError(failure.message)), (_) {
       final previousState = state;

@@ -292,24 +292,23 @@ class ProductRepositoryImpl implements ProductRepository {
     int quantity,
   ) async {
     final productResult = await getProductById(productId);
-    return await productResult.fold(
-      (failure) => Future.value(Left(failure)),
-      (product) async {
-        if (product.stock < quantity) {
-          return Left(
-            ValidationFailure(
-              'Stock insuficiente para "${product.name}" (disponible: ${product.stock})',
-            ),
-          );
-        }
+    return await productResult.fold((failure) => Future.value(Left(failure)), (
+      product,
+    ) async {
+      if (product.stock < quantity) {
+        return Left(
+          ValidationFailure(
+            'Stock insuficiente para "${product.name}" (disponible: ${product.stock})',
+          ),
+        );
+      }
 
-        final updated = product
-            .copyWith(stock: product.stock - quantity)
-            .withSyncedStockStatus();
+      final updated = product
+          .copyWith(stock: product.stock - quantity)
+          .normalize();
 
-        return updateProduct(updated);
-      },
-    );
+      return updateProduct(updated);
+    });
   }
 
   ///Para eliminar la imagen usando su url publica

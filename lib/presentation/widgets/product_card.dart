@@ -44,7 +44,7 @@ class ProductCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Estado: ${product.statusLabel}',
+                'Estado: ${product.normalize()}',
                 style: TextStyle(color: statusColor, fontSize: 12),
               ),
               const SizedBox(height: 4),

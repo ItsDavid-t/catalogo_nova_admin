@@ -1,11 +1,11 @@
 import 'package:equatable/equatable.dart';
 
 class UserSession extends Equatable {
-  final String gmail;
-  final String uuid;
+  final String email;
+  final String userId;
 
-  const UserSession(this.gmail, this.uuid);
+  const UserSession(this.email, this.userId);
 
   @override
-  List<Object> get props => [gmail, uuid];
+  List<Object> get props => [email, userId];
 }

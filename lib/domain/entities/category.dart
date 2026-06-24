@@ -7,7 +7,11 @@ class Category {
   Category({this.id, this.parentId, required this.name, this.shopId});
 
   Map<String, dynamic> toMap() {
-    final map = <String, dynamic>{'id': id, 'name': name, 'parentId': parentId};
+    final map = <String, dynamic>{
+      'id': id,
+      'name': name,
+      'parent_id': parentId,
+    };
     if (shopId != null) {
       map['shop_id'] = shopId;
     }
@@ -18,8 +22,8 @@ class Category {
     return Category(
       id: map['id'] as int?,
       name: map['name'] as String,
-      parentId: map['parentId'] as int?,
-      shopId: (map['shopId'] ?? map['shop_id']) as String?,
+      parentId: map['parent_id'] as int?,
+      shopId: map['shop_id'] as String?,
     );
   }
 
@@ -34,7 +38,7 @@ class Category {
 
   @override
   String toString() =>
-      'Category(id: $id, name: $name, parentId: $parentId, shopId: $shopId)';
+      'Category(id: $id, name: $name, parent_id: $parentId, shop_id: $shopId)';
 
   @override
   bool operator ==(Object other) {

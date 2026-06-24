@@ -45,7 +45,9 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
   void _loadShopProfile() {
     final authState = context.read<AuthCubit>().state;
     if (authState is AuthAuthenticated) {
-      context.read<ShopProfileCubit>().loadProfile(authState.userSession.uuid);
+      context.read<ShopProfileCubit>().loadProfile(
+        authState.userSession.userId,
+      );
     }
   }
 
@@ -71,7 +73,7 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
     }
 
     final profile = ShopProfile(
-      id: authState.userSession.uuid,
+      id: authState.userSession.userId,
       shopName: _shopNameController.text.trim(),
       whatsappNumber: _whatsappController.text.trim(),
       telegramUsername: _normalizeTelegram(_telegramController.text),

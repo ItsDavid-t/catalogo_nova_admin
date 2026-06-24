@@ -35,8 +35,8 @@ class Product {
     this.classification,
     this.categoryId,
     this.shopId,
-    this.costPrice = 0.0,
-    this.sellPrice = 0.0,
+    required this.costPrice,
+    required this.sellPrice,
     required this.stock,
     this.lowStockAlert = 0,
     required this.imgUrl,
@@ -50,14 +50,14 @@ class Product {
       'name': name,
       'description': description,
       'stock': stock,
-      'lowStockAlert': lowStockAlert,
+      'low_stock_alert': lowStockAlert,
       'classification': classification?.trim().toLowerCase(),
       'categoryId': categoryId,
       'cost_price': costPrice,
       'sell_price': sellPrice,
-      'imgUrl': imgUrl,
+      'img_url': imgUrl,
       'status': status.name,
-      'createdAt': createdAt.toIso8601String(),
+      'created_at': createdAt.toIso8601String(),
     };
     if (shopId != null) {
       map['shop_id'] = shopId;
@@ -66,34 +66,39 @@ class Product {
   }
 
   factory Product.fromMap(Map<String, dynamic> map) {
+    final rawDate = map['created_at'];
     return Product(
       id: map['id'] as int?,
       name: map['name'] as String,
       description: map['description'] as String?,
       stock: (map['stock'] ?? 0) as int,
-      lowStockAlert: (map['lowStockAlert'] ?? 0) as int,
+      lowStockAlert: (map['low_stock_alert'] ?? 0) as int,
       classification: map['classification'] as String?,
-      categoryId: map['categoryId'] as int?,
-      shopId: (map['shopId'] ?? map['shop_id']) as String?,
+      categoryId: map['category_id'] as int?,
+      shopId: map['shop_id']?.toString(),
       costPrice: (map['cost_price'] ?? 0.0) is num
           ? (map['cost_price']).toDouble()
           : double.tryParse((map['cost_price']).toString()) ?? 0.0,
       sellPrice: (map['sell_price'] ?? 0.0) is num
           ? (map['sell_price']).toDouble()
           : double.tryParse((map['sell_price']).toString()) ?? 0.0,
-      imgUrl: (map['imgUrl'] ?? '') as String,
+      imgUrl: (map['img_url'] ?? '') as String,
       status: _statusFromString((map['status'] ?? 'available') as String),
-      createdAt:
-          DateTime.tryParse((map['createdAt'] ?? '') as String) ??
-          DateTime.now(),
+      createdAt: rawDate is String
+          ? DateTime.tryParse(rawDate) ?? DateTime.now()
+          : rawDate is DateTime
+          ? rawDate
+          : DateTime.now(),
     );
   }
 
   static ProductStatus _statusFromString(String status) {
-    switch (status) {
+    final normalized = status.toLowerCase().replaceAll('_', '');
+
+    switch (normalized) {
       case 'reserved':
         return ProductStatus.reserved;
-      case 'outOfStock':
+      case 'outofstock':
         return ProductStatus.outOfStock;
       default:
         return ProductStatus.available;
@@ -132,18 +137,19 @@ class Product {
     );
   }
 
-  bool get isLowStock => stock > 0 && stock < lowStockAlert;
+  bool get isLowStock =>
+      lowStockAlert > 0 && stock > 0 && stock < lowStockAlert;
 
-  bool get isEffectivelyOutOfStock =>
-      stock <= 0 || status == ProductStatus.outOfStock;
-
-  Product withSyncedStockStatus() {
+  bool get isEffectivelyOutOfStock => stock <= 0;
+  Product normalize() {
     if (stock <= 0) {
       return copyWith(status: ProductStatus.outOfStock);
     }
-    if (status == ProductStatus.outOfStock) {
+
+    if (status == ProductStatus.outOfStock && stock > 0) {
       return copyWith(status: ProductStatus.available);
     }
+
     return this;
   }
 

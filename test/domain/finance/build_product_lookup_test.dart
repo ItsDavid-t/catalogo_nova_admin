@@ -27,4 +27,56 @@ void main() {
     expect(result.names[1], 'Telefono');
     expect(result.costs[1], 300);
   });
+
+  test('Solo agrega  productos con id valido', () {
+    //Preparar datos
+    final products = [
+      Product(
+        id: 1,
+        name: "Telefono",
+        stock: 4,
+        imgUrl: " ",
+        status: ProductStatus.available,
+        createdAt: DateTime.now(),
+        costPrice: 300,
+        sellPrice: 4000,
+      ),
+      Product(
+        id: null,
+        name: "Lapotop",
+        stock: 2,
+        imgUrl: ' ',
+        status: ProductStatus.available,
+        createdAt: DateTime.now(),
+        costPrice: 500,
+        sellPrice: 6000,
+      ),
+    ];
+
+    final useCase = BuildProductLookup();
+
+    // Ejecutar
+    final result = useCase(products);
+
+    //Comprobar
+    expect(result.names.length, 1);
+    expect(result.costs.length, 1);
+
+    expect(result.names[1], 'Telefono');
+    expect(result.costs[1], 300);
+  });
+
+  test("Me retorna mapa vacíos cuando la lista este vacía", () {
+    //Preparar datos
+    final products = <Product>[];
+
+    final useCase = BuildProductLookup();
+
+    // Ejecutar
+    final result = useCase(products);
+
+    //Comprobar
+    expect(result.names, isEmpty);
+    expect(result.costs, isEmpty);
+  });
 }

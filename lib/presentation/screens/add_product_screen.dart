@@ -55,7 +55,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _stockController.text = '0';
       _lowStockAlertController.text = '0';
     }
-    final currentUserId = context.read<AuthCubit>().currentSession?.uuid;
+    final currentUserId = context.read<AuthCubit>().currentSession?.userId;
     context.read<CategoryCubit>().fetchMainCategories(shopId: currentUserId);
   }
 
@@ -101,7 +101,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       }
       imgUrl = uploadedUrl;
     }
-    final currentUserId = context.read<AuthCubit>().currentSession?.uuid;
+    final currentUserId = context.read<AuthCubit>().currentSession?.userId;
 
     final classificationText = _classificationController.text.trim();
     int idCategory = _selectedFamily!.id!;
@@ -212,7 +212,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     if (created != true) return;
 
-    final currentUserId = context.read<AuthCubit>().currentSession?.uuid;
+    final currentUserId = context.read<AuthCubit>().currentSession?.userId;
     final newCategoryName = _newCategoryController.text.trim();
     await context.read<CategoryCubit>().addCategory(
       Category(name: newCategoryName, shopId: currentUserId),
@@ -306,7 +306,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                   final currentUserId = context
                                       .read<AuthCubit>()
                                       .currentSession
-                                      ?.uuid;
+                                      ?.userId;
                                   context
                                       .read<CategoryCubit>()
                                       .fetchMainCategories(

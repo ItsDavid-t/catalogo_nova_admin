@@ -25,7 +25,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
   }
 
   Future<void> _loadFinances() async {
-    final shopId = context.read<AuthCubit>().currentSession?.uuid;
+    final shopId = context.read<AuthCubit>().currentSession?.userId;
     if (shopId == null) return;
 
     await context.read<ProductCubit>().loadProducts(shopId: shopId);
@@ -37,9 +37,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
     final productState = context.read<ProductCubit>().state;
     if (productState is! ProductLoaded) return;
 
-    final lookup = context
-        .read<SaleCubit>()
-        .buildLookupFromProducts(productState.products);
+    final lookup = context.read<SaleCubit>().buildLookupFromProducts(
+      productState.products,
+    );
 
     context.read<SaleCubit>().calculateFinanceForSales(
       sales,
@@ -82,7 +82,11 @@ class _FinanceScreenState extends State<FinanceScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.error_outline, size: 50, color: Colors.red),
+                    const Icon(
+                      Icons.error_outline,
+                      size: 50,
+                      color: Colors.red,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Error: ${state.message}',
@@ -128,9 +132,9 @@ class _FinanceScreenState extends State<FinanceScreen> {
           const SizedBox(height: 8),
           Text(
             'Registra tu primera venta para ver ganancias aquí',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),

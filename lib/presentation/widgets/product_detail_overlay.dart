@@ -166,7 +166,9 @@ class _ProductDetailOverlayState extends State<ProductDetailOverlay> {
                                   Icons.info_outline,
                                   color: statusColor,
                                 ),
-                                label: Text(widget.product.statusLabel),
+                                label: Text(
+                                  widget.product.normalize().statusLabel,
+                                ),
                               ),
                               if (widget.product.categoryId != null)
                                 Chip(
@@ -227,9 +229,7 @@ class _ProductDetailOverlayState extends State<ProductDetailOverlay> {
                                     ? Colors.red.withValues(alpha: 0.4)
                                     : widget.product.isLowStock
                                     ? Colors.orange.withValues(alpha: 0.4)
-                                    : Theme.of(context)
-                                          .colorScheme
-                                          .secondary
+                                    : Theme.of(context).colorScheme.secondary
                                           .withValues(alpha: 0.3),
                               ),
                             ),
@@ -247,7 +247,9 @@ class _ProductDetailOverlayState extends State<ProductDetailOverlay> {
                                       .textTheme
                                       .headlineSmall
                                       ?.copyWith(
-                                        color: widget.product
+                                        color:
+                                            widget
+                                                .product
                                                 .isEffectivelyOutOfStock
                                             ? Colors.red
                                             : widget.product.isLowStock

@@ -11,7 +11,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
   AuthRepositoryImpl(this._supabase);
 
-  ///Inicio de sesion usando el email y la contraseña
   @override
   Future<Either<Failure, UserSession>> signIn({
     required String email,
@@ -36,7 +35,6 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  ///Registrase usando email y contraseña
   @override
   Future<Either<Failure, UserSession>> signUp({
     required String email,
@@ -68,7 +66,6 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  ///Cerrar session
   @override
   Future<Either<Failure, Unit>> signOut() async {
     try {
@@ -113,7 +110,12 @@ class AuthRepositoryImpl implements AuthRepository {
 
   ///Para convertir un User a un UserSession
   UserSession _toSession(User user) {
-    return UserSession(user.email ?? '', user.id);
+    final email = user.email;
+
+    if (email == null) {
+      throw Exception('User email es null');
+    }
+    return UserSession(email, user.id);
   }
 
   /// Convierte errores de Supabase en errores de dominio

@@ -84,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await Future.wait([
       context.read<ProductCubit>().loadProducts(),
       context.read<CategoryCubit>().fetchMainCategories(
-        shopId: context.read<AuthCubit>().currentSession?.uuid,
+        shopId: context.read<AuthCubit>().currentSession?.userId,
       ),
     ]);
   }
@@ -260,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               shopId: context
                                   .read<AuthCubit>()
                                   .currentSession
-                                  ?.uuid,
+                                  ?.userId,
                             ),
                       ),
                     );
