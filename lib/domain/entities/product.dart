@@ -52,7 +52,7 @@ class Product {
       'stock': stock,
       'low_stock_alert': lowStockAlert,
       'classification': classification?.trim().toLowerCase(),
-      'categoryId': categoryId,
+      'category_id': categoryId,
       'cost_price': costPrice,
       'sell_price': sellPrice,
       'img_url': imgUrl,
@@ -151,16 +151,5 @@ class Product {
     }
 
     return this;
-  }
-
-  String get statusLabel {
-    switch (status) {
-      case ProductStatus.available:
-        return 'Disponible';
-      case ProductStatus.reserved:
-        return 'Reservado';
-      case ProductStatus.outOfStock:
-        return 'Sin Stock';
-    }
   }
 }

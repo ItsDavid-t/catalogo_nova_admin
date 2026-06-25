@@ -167,7 +167,7 @@ class _ProductDetailOverlayState extends State<ProductDetailOverlay> {
                                   color: statusColor,
                                 ),
                                 label: Text(
-                                  widget.product.normalize().statusLabel,
+                                  widget.product.normalize().status.displayName,
                                 ),
                               ),
                               if (widget.product.categoryId != null)

@@ -79,4 +79,41 @@ void main() {
     expect(result.names, isEmpty);
     expect(result.costs, isEmpty);
   });
+  test('Construye correctamente lookup con multiples productos', () {
+    final products = [
+      Product(
+        id: 1,
+        name: 'Telefono',
+        stock: 4,
+        imgUrl: '',
+        status: ProductStatus.available,
+        createdAt: DateTime.now(),
+        costPrice: 300,
+        sellPrice: 4000,
+      ),
+      Product(
+        id: 2,
+        name: 'Laptop',
+        stock: 2,
+        imgUrl: '',
+        status: ProductStatus.available,
+        createdAt: DateTime.now(),
+        costPrice: 500,
+        sellPrice: 6000,
+      ),
+    ];
+
+    final useCase = BuildProductLookup();
+
+    final result = useCase(products);
+
+    expect(result.names.length, 2);
+    expect(result.costs.length, 2);
+
+    expect(result.names[1], 'Telefono');
+    expect(result.names[2], 'Laptop');
+
+    expect(result.costs[1], 300);
+    expect(result.costs[2], 500);
+  });
 }

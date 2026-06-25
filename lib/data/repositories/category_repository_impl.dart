@@ -7,22 +7,33 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CategoryRepositoryImpl implements CategoryRepository {
   final SupabaseClient _supabase;
-  List<Category> _toCategories(List response) {
-    return response.map((e) => Category.fromMap(e)).toList();
+  List<Category> _toCategories(List data) {
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map(Category.fromMap)
+        .toList();
   }
 
   static const _table = 'Category';
 
   CategoryRepositoryImpl(this._supabase);
 
+  PostgrestFilterBuilder _baseQuery({String? shopId}) {
+    var query = _supabase.from(_table).select();
+
+    if (shopId != null) {
+      query = query.eq('shop_id', shopId);
+    }
+
+    return query;
+  }
+
   @override
   Future<Either<Failure, List<Category>>> getAllCategories({
     String? shopId,
   }) async {
     try {
-      final response = shopId == null
-          ? await _supabase.from(_table).select()
-          : await _supabase.from(_table).select().eq('shop_id', shopId);
+      final response = await _baseQuery(shopId: shopId);
       return Right(_toCategories(response));
     } on PostgrestException catch (e) {
       developer.log('ERROR DE SUPABASE (Category): ${e.message}');
@@ -38,18 +49,9 @@ class CategoryRepositoryImpl implements CategoryRepository {
     String? shopId,
   }) async {
     try {
-      final response = shopId == null
-          ? await _supabase
-                .from(_table)
-                .select()
-                .isFilter('parent_id', null)
-                .order('name')
-          : await _supabase
-                .from(_table)
-                .select()
-                .isFilter('parent_id', null)
-                .eq('shop_id', shopId)
-                .order('name');
+      final response = await _baseQuery(
+        shopId: shopId,
+      ).isFilter('parent_id', null).order('name');
       return Right(_toCategories(response));
     } on PostgrestException catch (e) {
       developer.log('ERROR DE SUPABASE (Category): ${e.message}');
@@ -66,18 +68,9 @@ class CategoryRepositoryImpl implements CategoryRepository {
     String? shopId,
   }) async {
     try {
-      final response = shopId == null
-          ? await _supabase
-                .from(_table)
-                .select()
-                .eq('parent_id', parentId)
-                .order('name')
-          : await _supabase
-                .from('Category')
-                .select()
-                .eq('parent_id', parentId)
-                .eq('shop_id', shopId)
-                .order('name');
+      final response = await _baseQuery(
+        shopId: shopId,
+      ).eq('parent_id', parentId).order('name');
       return Right(_toCategories(response));
     } catch (e, st) {
       developer.log('ERROR DE SUPABASE', error: e, stackTrace: st);

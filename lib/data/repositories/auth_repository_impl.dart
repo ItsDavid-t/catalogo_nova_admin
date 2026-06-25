@@ -99,23 +99,23 @@ class AuthRepositoryImpl implements AuthRepository {
   ///Escucha los cambios en el estado de autentificacion
   @override
   Stream<UserSession?> watchAuthSession() {
-    return _supabase.auth.onAuthStateChange.map((event) {
-      final user = event.session?.user;
-      if (user == null) {
-        return null;
-      }
-      return _toSession(user);
-    });
+    return _supabase.auth.onAuthStateChange
+        .map((event) {
+          final user = event.session?.user;
+          if (user == null || user.email == null) return null;
+
+          return UserSession(user.email!, user.id);
+        })
+        .handleError((error) {
+          developer.log('AUTH stream error', error: error);
+        });
   }
 
   ///Para convertir un User a un UserSession
   UserSession _toSession(User user) {
     final email = user.email;
 
-    if (email == null) {
-      throw Exception('User email es null');
-    }
-    return UserSession(email, user.id);
+    return UserSession(email ?? '', user.id);
   }
 
   /// Convierte errores de Supabase en errores de dominio

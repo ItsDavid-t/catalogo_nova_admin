@@ -1,4 +1,6 @@
-class SaleItem {
+import 'package:equatable/equatable.dart';
+
+class SaleItem extends Equatable {
   final int? id;
   final int saleId;
   final int productId;
@@ -12,8 +14,12 @@ class SaleItem {
     required this.productId,
     required this.quantity,
     required this.priceAtSale,
-    this.costAtSale = 0,
-  });
+    required this.costAtSale,
+  }) : assert(saleId > 0),
+       assert(productId > 0),
+       assert(quantity > 0),
+       assert(priceAtSale >= 0),
+       assert(costAtSale >= 0);
 
   Map<String, dynamic> toMap() {
     return {
@@ -37,8 +43,38 @@ class SaleItem {
     );
   }
 
+  SaleItem copyWith({
+    int? id,
+    int? saleId,
+    int? productId,
+    int? quantity,
+    double? priceAtSale,
+    double? costAtSale,
+  }) {
+    return SaleItem(
+      id: id ?? this.id,
+      saleId: saleId ?? this.saleId,
+      productId: productId ?? this.productId,
+      quantity: quantity ?? this.quantity,
+      priceAtSale: priceAtSale ?? this.priceAtSale,
+      costAtSale: costAtSale ?? this.costAtSale,
+    );
+  }
+
   static double _toDouble(dynamic value) {
     if (value is num) return value.toDouble();
     return double.tryParse(value.toString()) ?? 0;
   }
+
+  @override
+  List<Object?> get props => [
+    id,
+    saleId,
+    productId,
+    quantity,
+    priceAtSale,
+    costAtSale,
+  ];
+
+  double get subtotal => quantity * priceAtSale;
 }
