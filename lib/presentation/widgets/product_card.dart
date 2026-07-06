@@ -27,64 +27,141 @@ class ProductCard extends StatelessWidget {
         : Colors.grey;
 
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: statusColor.withValues(alpha: 0.2),
-          child: Icon(Icons.inventory_2_outlined, color: statusColor),
-        ),
-        title: Text(
-          product.name,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 3),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Estado: ${product.normalize()}',
-                style: TextStyle(color: statusColor, fontSize: 12),
+      elevation: 0.5,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.grey.withAlpha(25), width: 1),
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            // Status indicator
+            Container(
+              width: 4,
+              height: 40,
+              decoration: BoxDecoration(
+                color: statusColor,
+                borderRadius: BorderRadius.circular(2),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Stock: ${product.stock}${product.isLowStock ? ' (poco stock)' : ''}',
-                style: TextStyle(color: stockColor, fontSize: 12),
-              ),
-              const SizedBox(height: 4),
-              if ((product.classification ?? '').trim().isNotEmpty)
-                Text(
-                  'Clasificación: ${product.classification}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              const SizedBox(height: 4),
-              Row(
+            ),
+            const SizedBox(width: 10),
+            // Product info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (product.costPrice > 0)
-                    Text(
-                      'Costo: \$${product.costPrice.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 12, color: Colors.blue),
-                    ),
-                  if (product.sellPrice > 0) ...[
-                    const SizedBox(width: 8),
-                    Text(
-                      'Venta: \$${product.sellPrice.toStringAsFixed(2)}',
-                      style: const TextStyle(fontSize: 12, color: Colors.green),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          product.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: statusColor.withAlpha(30),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          product.normalize().status.displayName,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      // Stock
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.inventory_2,
+                              size: 13,
+                              color: stockColor,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${product.stock}',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Price
+                      Text(
+                        '${product.currency} ${product.sellPrice.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          color: Colors.green,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if ((product.classification ?? '').trim().isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.label_outline,
+                          size: 12,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 3),
+                        Expanded(
+                          child: Text(
+                            product.classification ?? 'Sin clasificación',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            // Trailing icon
+            if (!onReadonly)
+              Icon(
+                product.isEffectivelyOutOfStock
+                    ? Icons.remove_shopping_cart
+                    : product.isLowStock
+                    ? Icons.warning
+                    : Icons.check_circle,
+                size: 18,
+                color: product.isEffectivelyOutOfStock
+                    ? Colors.red
+                    : product.isLowStock
+                    ? Colors.orange
+                    : statusColor,
+              ),
+          ],
         ),
-        trailing: onReadonly
-            ? null
-            : product.isEffectivelyOutOfStock
-            ? const Icon(Icons.remove_shopping_cart, color: Colors.red)
-            : product.isLowStock
-            ? const Icon(Icons.warning, color: Colors.orange)
-            : Icon(Icons.circle, size: 14, color: statusColor),
       ),
     );
   }

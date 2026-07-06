@@ -57,7 +57,7 @@ class _ProductDetailOverlayState extends State<ProductDetailOverlay> {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = switch (widget.product.status) {
+    final statusColor = switch (widget.product.normalize().status) {
       ProductStatus.available => Colors.green,
       ProductStatus.reserved => Colors.orange,
       ProductStatus.outOfStock => Colors.red,
@@ -156,7 +156,7 @@ class _ProductDetailOverlayState extends State<ProductDetailOverlay> {
                             thickness: 0.5,
                           ),
                           SizedBox(height: 12),
-                          // Estado y categoría
+
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
@@ -298,7 +298,7 @@ class _ProductDetailOverlayState extends State<ProductDetailOverlay> {
                                         ).textTheme.bodyMedium,
                                       ),
                                       Text(
-                                        '\$${widget.product.costPrice.toStringAsFixed(2)}',
+                                        '${widget.product.currency} ${widget.product.costPrice.toStringAsFixed(2)}',
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyMedium
@@ -326,7 +326,7 @@ class _ProductDetailOverlayState extends State<ProductDetailOverlay> {
                                         ).textTheme.bodyMedium,
                                       ),
                                       Text(
-                                        '\$${widget.product.sellPrice.toStringAsFixed(2)}',
+                                        '${widget.product.currency} ${widget.product.sellPrice.toStringAsFixed(2)}',
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyMedium

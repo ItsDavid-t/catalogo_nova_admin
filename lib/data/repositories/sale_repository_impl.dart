@@ -1,6 +1,6 @@
 import 'dart:developer' as developer;
-
 import 'package:echo_stock/domain/core/failures.dart';
+import 'package:echo_stock/domain/core/filters/sale_filters.dart';
 import 'package:echo_stock/domain/entities/sale.dart';
 import 'package:echo_stock/domain/entities/sale_item.dart';
 import 'package:echo_stock/domain/repositories/sale_repository.dart';
@@ -42,13 +42,26 @@ class SaleRepositoryImpl implements SaleRepository {
 
   /// Para obtener cada venta de una tienda en específico
   @override
-  Future<Either<Failure, List<Sale>>> getSalesByShop(String shopId) async {
+  @override
+  Future<Either<Failure, List<Sale>>> getSalesByShop(
+    String shopId, {
+    SalesFilter? filter,
+  }) async {
     try {
-      final response = await _supabase
+      var query = _supabase
           .from('sale')
           .select(_saleSelectWithCost)
-          .eq('shop_id', shopId)
-          .order('created_at', ascending: false);
+          .eq('shop_id', shopId);
+
+      if (filter?.from != null) {
+        query = query.gte('created_at', filter!.from!.toIso8601String());
+      }
+
+      if (filter?.to != null) {
+        query = query.lte('created_at', filter!.to!.toIso8601String());
+      }
+
+      final response = await query.order('created_at', ascending: false);
 
       final sales = (response).map((row) => Sale.fromMap(row)).toList();
       return Right(sales);

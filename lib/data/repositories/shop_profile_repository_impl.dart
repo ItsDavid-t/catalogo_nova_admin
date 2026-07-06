@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'dart:typed_data';
 
 import 'package:echo_stock/domain/core/failures.dart';
 import 'package:echo_stock/domain/entities/shop_profile.dart';
@@ -39,6 +40,28 @@ class ShopProfileRepositoryImpl implements ShopProfileRepository {
     } catch (e) {
       developer.log('ERROR DE SUPABASE (shop_profile): $e');
       return Left(DatabaseFailure('Error al guardar el perfil de tienda'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> uploadLogo(
+    Uint8List bytes,
+    String fileName,
+  ) async {
+    try {
+      final path =
+          'shop-profile/${DateTime.now().millisecondsSinceEpoch}_$fileName';
+      final storage = _supabase.storage.from('product-images');
+      await storage.uploadBinary(
+        path,
+        bytes,
+        fileOptions: const FileOptions(upsert: false),
+      );
+      final publicUrl = storage.getPublicUrl(path);
+      return Right(publicUrl);
+    } catch (e) {
+      developer.log('ERROR DE SUPABASE STORAGE (shop_profile): $e');
+      return Left(DatabaseFailure('Error al subir el logo de la tienda'));
     }
   }
 }

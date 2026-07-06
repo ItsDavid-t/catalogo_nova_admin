@@ -20,13 +20,18 @@ class Sale extends Equatable {
        assert(totalAmount >= 0);
 
   Map<String, dynamic> toHeaderMap() {
-    return {
+    final map = {
       'id': id,
       'shop_id': shopId,
       'total_amount': totalAmount,
-      'payment_method': paymentMethod,
       'created_at': createdAt.toIso8601String(),
     };
+
+    if (paymentMethod.trim().isNotEmpty) {
+      map['payment_method'] = paymentMethod;
+    }
+
+    return map;
   }
 
   factory Sale.fromMap(Map<String, dynamic> map) {
@@ -44,7 +49,7 @@ class Sale extends Equatable {
           map['shop_id']?.toString() ??
           (throw Exception('shop_id is required')),
       totalAmount: _toDouble(map['total_amount']),
-      paymentMethod: (map['payment_method'] as String?) ?? 'venta',
+      paymentMethod: (map['payment_method'] as String?) ?? '',
       createdAt: rawDate is String
           ? DateTime.tryParse(rawDate) ?? DateTime.now()
           : rawDate is DateTime

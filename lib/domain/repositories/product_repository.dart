@@ -25,4 +25,6 @@ abstract class ProductRepository {
     int productId,
     int quantity,
   );
+
+  Future<Either<Failure, Unit>> deleteProductImage(String imgUrl);
 }

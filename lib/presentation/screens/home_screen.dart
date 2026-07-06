@@ -32,6 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isTitle = true;
   final TextEditingController controllerTiltle = TextEditingController();
   final FocusNode focus = FocusNode();
+  List<Product>? _cachedFilteredProducts;
   @override
   void initState() {
     super.initState();
@@ -104,6 +105,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (state is ProductLoaded) {
+      // update cache with last known good filtered list
+      _cachedFilteredProducts = state.filteredProducts;
       if (state.products.isEmpty) {
         return ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -319,22 +322,50 @@ class _HomeScreenState extends State<HomeScreen> {
                   return const SizedBox();
                 },
               ),
-              if (productState is ProductLoaded)
-                Expanded(
-                  child: BlocConsumer<ProductCubit, ProductState>(
-                    listener: (context, state) {
-                      if (state is ProductError) {
-                        _showErrorSnackBar(state.message);
-                      }
-                    },
-                    builder: (context, state) {
+              Expanded(
+                child: BlocConsumer<ProductCubit, ProductState>(
+                  listener: (context, state) {
+                    if (state is ProductError) {
+                      _showErrorSnackBar(state.message);
+                    }
+                    if (state is ProductLoaded) {
+                      // ensure cache updated when new data arrives
+                      _cachedFilteredProducts = state.filteredProducts;
+                    }
+                  },
+                  builder: (context, state) {
+                    // If we have a cached list and current state is not loaded,
+                    // show the cached products to avoid blank UI during transient states.
+                    if (state is! ProductLoaded &&
+                        _cachedFilteredProducts != null) {
                       return RefreshIndicator(
                         onRefresh: _refreshContent,
-                        child: _buildProductContent(context, state),
+                        child: ProductListView(
+                          products: _cachedFilteredProducts!,
+                          onRemoveProduct: _removeProduct,
+                          onTapProduct: (product) async {
+                            final resultDialog = await showDialog(
+                              context: context,
+                              builder: (context) =>
+                                  ProductDetailOverlay(product: product),
+                            );
+                            if (!mounted) return;
+                            if (resultDialog == 'edit') {
+                              await _navigatorToEditProduct(product);
+                            }
+                          },
+                          onLongPressProduct: _navigatorToEditProduct,
+                        ),
                       );
-                    },
-                  ),
+                    }
+
+                    return RefreshIndicator(
+                      onRefresh: _refreshContent,
+                      child: _buildProductContent(context, state),
+                    );
+                  },
                 ),
+              ),
             ],
           );
         },

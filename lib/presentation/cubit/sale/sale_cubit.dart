@@ -6,11 +6,12 @@ import 'package:echo_stock/domain/usecases/finance/build_product_lookup.dart';
 import 'package:echo_stock/domain/usecases/finance/calculate_profit_loss.dart';
 import 'package:echo_stock/domain/usecases/sale/get_sales_by_shop.dart';
 import 'package:echo_stock/domain/usecases/sale/process_sale.dart';
+import 'package:echo_stock/domain/core/filters/sale_filters.dart';
 import 'package:echo_stock/presentation/cubit/sale/sale_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SaleCubit extends Cubit<SaleState> {
-  static const _defaultPaymentMethod = 'venta';
+  static const _defaultPaymentMethod = '';
 
   final GetSalesByShop _getSalesByShop;
   final ProcessSale _processSale;
@@ -39,9 +40,10 @@ class SaleCubit extends Cubit<SaleState> {
     );
   }
 
-  Future<void> loadSales(String shopId) async {
+  Future<void> loadSales(String shopId, {required SalesFilter filter}) async {
     emit(const SaleLoading());
-    final result = await _getSalesByShop(shopId);
+
+    final result = await _getSalesByShop(shopId, filter: filter);
 
     result.fold(
       (failure) => emit(SaleFailure(failure.message)),

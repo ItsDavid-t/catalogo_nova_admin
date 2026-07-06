@@ -15,8 +15,7 @@ class SaleItem extends Equatable {
     required this.quantity,
     required this.priceAtSale,
     required this.costAtSale,
-  }) : assert(saleId > 0),
-       assert(productId > 0),
+  }) : assert(productId > 0),
        assert(quantity > 0),
        assert(priceAtSale >= 0),
        assert(costAtSale >= 0);

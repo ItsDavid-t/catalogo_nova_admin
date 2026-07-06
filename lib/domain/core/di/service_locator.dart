@@ -33,6 +33,7 @@ import 'package:echo_stock/domain/usecases/sale/process_sale.dart';
 import 'package:echo_stock/domain/usecases/finance/build_product_lookup.dart';
 import 'package:echo_stock/domain/usecases/finance/calculate_profit_loss.dart';
 import 'package:echo_stock/domain/usecases/shop_profile/get_shop_profile.dart';
+import 'package:echo_stock/domain/usecases/shop_profile/upload_shop_profile_image.dart';
 import 'package:echo_stock/domain/usecases/shop_profile/upsert_shop_profile.dart';
 import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
 import 'package:echo_stock/presentation/cubit/shop_profile/shop_profile_cubit.dart';
@@ -112,6 +113,8 @@ Future<void> init() async {
   sl.registerFactory(() => GetSubCategories(sl()));
 
   sl.registerFactory(() => EnsureSubCategory(sl()));
+
+  sl.registerFactory(() => UploadShopProfileImage(sl()));
 
   sl.registerFactory(
     () => ShopProfileCubit(sl<GetShopProfile>(), sl<UpsertShopProfile>()),

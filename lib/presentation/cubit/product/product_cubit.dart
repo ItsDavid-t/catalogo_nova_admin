@@ -1,6 +1,8 @@
 import 'dart:typed_data';
+import 'dart:developer' as developer;
 
 import 'package:echo_stock/domain/entities/product.dart';
+import 'package:collection/collection.dart';
 import 'package:echo_stock/domain/usecases/product/add_product.dart';
 import 'package:echo_stock/domain/usecases/product/archive_product.dart';
 import 'package:echo_stock/domain/usecases/product/delete_product.dart';
@@ -37,8 +39,43 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> loadProducts({String? shopId}) async {
+    developer.log(
+      'loadProducts called shopId=$shopId currentState=${state.runtimeType}',
+      name: 'ProductCubit',
+    );
     if (shopId != null) {
       _shopId = shopId;
+    }
+
+    final currentState = state;
+    if (currentState is ProductLoaded &&
+        !currentState.isShowingReserved &&
+        !currentState.isShowingOutOfStock) {
+      final filtered = _applyFilters(
+        currentState.products,
+        null,
+        [],
+        [],
+        ProductOption.nameAz,
+        false,
+        false,
+      );
+
+      emit(
+        ProductLoaded(
+          currentState.products,
+          filtered,
+          null,
+          [],
+          [],
+          false,
+          ProductOption.nameAz,
+          false,
+          false,
+          false,
+        ),
+      );
+      return;
     }
 
     emit(ProductLoading(categoryId: null, isShowingOutOfStock: false));
@@ -74,13 +111,37 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> loadProductsByCategories(int? categoryId) async {
+    developer.log(
+      'loadProductsByCategories called categoryId=$categoryId currentState=${state.runtimeType}',
+      name: 'ProductCubit',
+    );
+    final currentState = state;
     if (categoryId == null) {
       loadProducts();
       return;
     }
+
+    if (currentState is ProductLoaded) {
+      final filtered = _applyFilters(
+        currentState.products,
+        categoryId,
+        currentState.selectedClassification,
+        currentState.selectedStatus,
+        currentState.sortOption,
+        currentState.isShowingOutOfStock,
+        currentState.isLowStockFilter,
+      );
+      emit(
+        currentState.copyWith(
+          filteredProducts: filtered,
+          selectedCategoryId: () => categoryId,
+        ),
+      );
+      return;
+    }
+
     emit(ProductLoading(isShowingOutOfStock: false, categoryId: categoryId));
     final result = await _getProductsByCategories(categoryId);
-
     result.fold(
       (failure) {
         emit(ProductError(failure.message));
@@ -117,6 +178,7 @@ class ProductCubit extends Cubit<ProductState> {
     final currentState = state;
 
     if (currentState is ProductLoaded) {
+      developer.log('changeSortOption: $sortOption', name: 'ProductCubit');
       final filtered = _applyFilters(
         currentState.products,
         currentState.selectedCategoryId,
@@ -139,6 +201,10 @@ class ProductCubit extends Cubit<ProductState> {
   void searchProducts(String query) {
     final currentState = state;
 
+    developer.log(
+      'searchProducts: "$query" currentState=${currentState.runtimeType}',
+      name: 'ProductCubit',
+    );
     if (currentState is ProductLoaded) {
       final searched = currentState.products.where((p) {
         return p.name.toLowerCase().contains(query.toLowerCase());
@@ -235,13 +301,13 @@ class ProductCubit extends Cubit<ProductState> {
     var sortList = [...products];
 
     if (classifications.isNotEmpty) {
-      sortList = sortList
-          .where(
-            (p) =>
-                p.classification != null &&
-                classifications.contains(p.classification),
-          )
-          .toList();
+      sortList = sortList.where((p) {
+        final productClassification =
+            (p.classification == null || p.classification!.trim().isEmpty)
+            ? 'sin clasificación'
+            : p.classification!.toLowerCase().trim();
+        return classifications.contains(productClassification);
+      }).toList();
     }
 
     if (statuses.isNotEmpty) {
@@ -307,6 +373,7 @@ class ProductCubit extends Cubit<ProductState> {
   void filterByStatus(List<ProductStatus> statusList) {
     final currentState = state;
     if (currentState is ProductLoaded) {
+      developer.log('filterByStatus: $statusList', name: 'ProductCubit');
       final filtered = _applyFilters(
         currentState.products,
         currentState.selectedCategoryId,
@@ -328,6 +395,10 @@ class ProductCubit extends Cubit<ProductState> {
   void filterByClassification(List<String> classifications) {
     final currentState = state;
     if (currentState is ProductLoaded) {
+      developer.log(
+        'filterByClassification: $classifications',
+        name: 'ProductCubit',
+      );
       final filtered = _applyFilters(
         currentState.products,
         currentState.selectedCategoryId,
@@ -350,6 +421,10 @@ class ProductCubit extends Cubit<ProductState> {
     final currentState = state;
 
     if (currentState is ProductLoaded) {
+      developer.log(
+        'toggleLowStockFilter current=${currentState.isLowStockFilter}',
+        name: 'ProductCubit',
+      );
       final newValue = !currentState.isLowStockFilter;
       final effectiveSortOption = newValue
           ? sortOption
@@ -435,6 +510,10 @@ class ProductCubit extends Cubit<ProductState> {
 
   void _reloadCurrentList([ProductState? oldState]) {
     final currentState = oldState ?? state;
+    developer.log(
+      '_reloadCurrentList currentState=${currentState.runtimeType}',
+      name: 'ProductCubit',
+    );
     if (currentState is ProductLoaded && currentState.isShowingOutOfStock) {
       loadOutOfStockProducts();
     } else if (currentState is ProductLoaded &&

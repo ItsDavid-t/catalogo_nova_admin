@@ -5,6 +5,7 @@ import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
 import 'package:echo_stock/presentation/cubit/sale/sale_cubit.dart';
 import 'package:echo_stock/presentation/cubit/shop_profile/shop_profile_cubit.dart';
 import 'package:flutter/material.dart';
+import 'dart:developer' as developer;
 import 'package:echo_stock/config/theme/app_theme.dart';
 import 'package:echo_stock/presentation/screens/auth_gate_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -22,7 +23,33 @@ Future<void> main() async {
   } catch (e) {
     rethrow;
   }
+
+  Bloc.observer = AppBlocObserver();
   runApp(const MyApp());
+}
+
+class AppBlocObserver extends BlocObserver {
+  @override
+  void onChange(BlocBase bloc, Change change) {
+    super.onChange(bloc, change);
+    if (bloc.runtimeType.toString() == 'ProductCubit') {
+      developer.log(
+        'onChange: ${bloc.runtimeType} -> $change',
+        name: 'AppBlocObserver',
+      );
+    }
+  }
+
+  @override
+  void onTransition(Bloc bloc, Transition transition) {
+    super.onTransition(bloc, transition);
+    if (bloc.runtimeType.toString() == 'ProductCubit') {
+      developer.log(
+        'onTransition: ${bloc.runtimeType} -> $transition',
+        name: 'AppBlocObserver',
+      );
+    }
+  }
 }
 
 class MyApp extends StatelessWidget {

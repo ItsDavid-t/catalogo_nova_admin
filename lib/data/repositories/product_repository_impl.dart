@@ -43,7 +43,7 @@ class ProductRepositoryImpl implements ProductRepository {
       final response = await _superBaseClient
           .from('Product')
           .select()
-          .inFilter('categoryId', categoryIds);
+          .inFilter('category_id', categoryIds);
       final List<Product> products = (response as List)
           .map((element) => Product.fromMap(element))
           .toList();
@@ -63,7 +63,7 @@ class ProductRepositoryImpl implements ProductRepository {
       final response = await _superBaseClient
           .from('Category')
           .select('id')
-          .eq('parentId', currentId);
+          .eq('parent_id', currentId);
       final subCategoryIds = (response as List)
           .map((category) => category['id'] as int)
           .toList();
@@ -105,7 +105,7 @@ class ProductRepositoryImpl implements ProductRepository {
           .from('Product')
           .select()
           .eq('status', 'outOfStock')
-          .eq('categoryId', categoryId);
+          .eq('category_id', categoryId);
       final List<Product> products = (response as List)
           .map((element) => Product.fromMap(element))
           .toList();
@@ -222,7 +222,7 @@ class ProductRepositoryImpl implements ProductRepository {
     final response = await _superBaseClient
         .from('Category')
         .select('id')
-        .eq('parentId', categoryId)
+        .eq('parent_id', categoryId)
         .limit(1);
     return (response as List).isNotEmpty;
   }
@@ -309,6 +309,17 @@ class ProductRepositoryImpl implements ProductRepository {
 
       return updateProduct(updated);
     });
+  }
+
+  @override
+  Future<Either<Failure, Unit>> deleteProductImage(String imgUrl) async {
+    try {
+      await _deleteProductImage(imgUrl);
+      return Right(unit);
+    } catch (e) {
+      developer.log('ERROR AL ELIMINAR IMAGEN: $e');
+      return Left(DatabaseFailure('Error al eliminar la imagen'));
+    }
   }
 
   ///Para eliminar la imagen usando su url publica

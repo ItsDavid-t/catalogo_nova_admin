@@ -34,10 +34,32 @@ class _AddProductScreenState extends State<AddProductScreen> {
   ProductStatus? _selectedStatus;
   Uint8List? _selectedImageBytes;
   String? _selectedImageName;
+  String _selectedCurrency = 'USD';
+  bool _isSubmitting = false;
+  final _costPriceFocusNode = FocusNode();
+  final _sellPriceFocusNode = FocusNode();
+  bool _showCostPriceHint = true;
+  bool _showSellPriceHint = true;
+  static const List<String> _currencyOptions = ['USD', 'EUR', 'MLC', 'CUP'];
 
   @override
   void initState() {
     super.initState();
+    _costPriceFocusNode.addListener(() {
+      if (mounted) {
+        setState(() {
+          _showCostPriceHint = !_costPriceFocusNode.hasFocus;
+        });
+      }
+    });
+    _sellPriceFocusNode.addListener(() {
+      if (mounted) {
+        setState(() {
+          _showSellPriceHint = !_sellPriceFocusNode.hasFocus;
+        });
+      }
+    });
+
     if (widget.product != null) {
       _nameController.text = widget.product!.name;
       _descriptionController.text = widget.product!.description ?? '';
@@ -48,11 +70,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _stockController.text = widget.product!.stock.toString();
       _lowStockAlertController.text = widget.product!.lowStockAlert.toString();
       _selectedStatus = widget.product!.status;
+      _selectedCurrency = widget.product!.currency;
     } else {
       _selectedStatus = ProductStatus.available;
-      _costPriceController.text = '0.0';
-      _sellPriceController.text = '0.0';
-      _stockController.text = '0';
+      _stockController.text = '1';
       _lowStockAlertController.text = '0';
     }
     final currentUserId = context.read<AuthCubit>().currentSession?.userId;
@@ -70,10 +91,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _sellPriceController.dispose();
     _stockController.dispose();
     _lowStockAlertController.dispose();
+    _costPriceFocusNode.dispose();
+    _sellPriceFocusNode.dispose();
     super.dispose();
   }
 
   void _submitForm() async {
+    if (_isSubmitting) return;
     if (!_formKey.currentState!.validate()) return;
     if (_selectedFamily == null) {
       _showErrorSnackBar('Por favor, selecciona una Categoría');
@@ -89,6 +113,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       return;
     }
 
+    setState(() => _isSubmitting = true);
     String imgUrl = _imgUrlController.text;
 
     if (_selectedImageBytes != null && _selectedImageName != null) {
@@ -97,9 +122,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
         _selectedImageName!,
       );
       if (uploadedUrl == null) {
+        if (mounted) setState(() => _isSubmitting = false);
         return;
       }
       imgUrl = uploadedUrl;
+      _imgUrlController.text = uploadedUrl;
+      _selectedImageBytes = null;
+      _selectedImageName = null;
     }
     final currentUserId = context.read<AuthCubit>().currentSession?.userId;
 
@@ -138,6 +167,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       lowStockAlert: lowStockAlert,
       costPrice: double.tryParse(_costPriceController.text) ?? 0.0,
       sellPrice: double.tryParse(_sellPriceController.text) ?? 0.0,
+      currency: _selectedCurrency,
       imgUrl: imgUrl,
       status: status,
       createdAt: widget.product?.createdAt ?? DateTime.now(),
@@ -148,6 +178,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
       await context.read<ProductCubit>().addProduct(product);
     } else {
       await context.read<ProductCubit>().updateProduct(product);
+    }
+
+    if (mounted) {
+      setState(() => _isSubmitting = false);
     }
   }
 
@@ -439,16 +473,41 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 _buildSection(
                   title: 'Precios',
                   children: [
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedCurrency,
+                      decoration: const InputDecoration(
+                        prefixIcon: Icon(Icons.monetization_on_outlined),
+                        labelText: 'Moneda',
+                      ),
+                      items: _currencyOptions.map((currency) {
+                        return DropdownMenuItem(
+                          value: currency,
+                          child: Text(currency),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _selectedCurrency = value;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 15),
                     Row(
                       children: [
                         Expanded(
                           child: TextFormField(
                             controller: _costPriceController,
-                            decoration: const InputDecoration(
+                            focusNode: _costPriceFocusNode,
+                            decoration: InputDecoration(
                               labelText: 'Precio de costo',
-                              prefixIcon: Icon(Icons.attach_money),
+                              hintText: _showCostPriceHint ? '0.00' : null,
+                              prefixIcon: const Icon(Icons.attach_money),
                             ),
-                            keyboardType: TextInputType.number,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             validator: (v) {
                               if (v == null || v.isEmpty) return null;
                               if (double.tryParse(v) == null) {
@@ -462,11 +521,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         Expanded(
                           child: TextFormField(
                             controller: _sellPriceController,
-                            decoration: const InputDecoration(
+                            focusNode: _sellPriceFocusNode,
+                            decoration: InputDecoration(
                               labelText: 'Precio de venta',
-                              prefixIcon: Icon(Icons.sell),
+                              hintText: _showSellPriceHint ? '0.00' : null,
+                              prefixIcon: const Icon(Icons.sell),
                             ),
-                            keyboardType: TextInputType.number,
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             validator: (v) {
                               if (v == null || v.isEmpty) return null;
                               if (double.tryParse(v) == null) {
@@ -539,12 +602,19 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         labelText: 'Estado',
                         prefixIcon: Icon(Icons.info_outline),
                       ),
-                      items: ProductStatus.values.map((status) {
-                        return DropdownMenuItem(
-                          value: status,
-                          child: Text(status.displayName),
-                        );
-                      }).toList(),
+                      items: ProductStatus.values
+                          .where(
+                            (status) =>
+                                status != ProductStatus.outOfStock ||
+                                widget.product != null,
+                          )
+                          .map((status) {
+                            return DropdownMenuItem(
+                              value: status,
+                              child: Text(status.displayName),
+                            );
+                          })
+                          .toList(),
                       onChanged: (value) =>
                           setState(() => _selectedStatus = value),
                     ),
@@ -554,13 +624,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 SizedBox(
                   width: double.infinity,
                   height: 50,
-                  child: BlocBuilder<ProductCubit, ProductState>(
-                    builder: (context, state) {
-                      return ElevatedButton(
-                        onPressed: _submitForm,
-                        child: const Text('Guardar producto'),
-                      );
-                    },
+                  child: ElevatedButton(
+                    onPressed: _isSubmitting ? null : _submitForm,
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                        : const Text('Guardar producto'),
                   ),
                 ),
               ],

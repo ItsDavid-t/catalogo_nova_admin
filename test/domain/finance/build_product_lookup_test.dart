@@ -116,4 +116,37 @@ void main() {
     expect(result.costs[1], 300);
     expect(result.costs[2], 500);
   });
+
+  test('Sobrescribe valores cuando el mismo id aparece varias veces', () {
+    final products = [
+      Product(
+        id: 1,
+        name: 'Telefono',
+        stock: 4,
+        imgUrl: '',
+        status: ProductStatus.available,
+        createdAt: DateTime.now(),
+        costPrice: 300,
+        sellPrice: 4000,
+      ),
+      Product(
+        id: 1,
+        name: 'Telefono renovado',
+        stock: 5,
+        imgUrl: '',
+        status: ProductStatus.available,
+        createdAt: DateTime.now(),
+        costPrice: 350,
+        sellPrice: 4200,
+      ),
+    ];
+
+    final result = const BuildProductLookup()(products);
+
+    expect(result.names.length, 1);
+    expect(result.costs.length, 1);
+
+    expect(result.names[1], 'Telefono renovado');
+    expect(result.costs[1], 350);
+  });
 }

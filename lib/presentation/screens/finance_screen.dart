@@ -1,3 +1,4 @@
+import 'package:echo_stock/domain/core/filters/sale_filters.dart';
 import 'package:echo_stock/domain/entities/profit_loss.dart';
 import 'package:echo_stock/domain/entities/sale.dart';
 import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
@@ -18,6 +19,7 @@ class FinanceScreen extends StatefulWidget {
 }
 
 class _FinanceScreenState extends State<FinanceScreen> {
+  SalesFilter _currentFilter = SalesFilter.month(DateTime.now());
   @override
   void initState() {
     super.initState();
@@ -26,11 +28,13 @@ class _FinanceScreenState extends State<FinanceScreen> {
 
   Future<void> _loadFinances() async {
     final shopId = context.read<AuthCubit>().currentSession?.userId;
+
     if (shopId == null) return;
 
     await context.read<ProductCubit>().loadProducts(shopId: shopId);
     if (!mounted) return;
-    await context.read<SaleCubit>().loadSales(shopId);
+
+    await context.read<SaleCubit>().loadSales(shopId, filter: _currentFilter);
   }
 
   void _calculateFinances(List<Sale> sales) {
@@ -121,6 +125,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+
         children: [
           Icon(
             Icons.point_of_sale_outlined,
@@ -162,6 +167,8 @@ class _FinanceScreenState extends State<FinanceScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _buildFilterBar(),
+            SizedBox(height: 16),
             _buildSummarySection(context, profitLoss),
             const SizedBox(height: 24),
             _buildMetricsGrid(context, profitLoss),
@@ -275,13 +282,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
   }
 
   Widget _buildMetricsGrid(BuildContext context, ProfitLoss profitLoss) {
-    final avgTicket = profitLoss.salesCount > 0
-        ? profitLoss.totalRevenue / profitLoss.salesCount
-        : 0.0;
-    final profitPerSale = profitLoss.salesCount > 0
-        ? profitLoss.grossProfit / profitLoss.salesCount
-        : 0.0;
-
     return GridView.count(
       crossAxisCount: 2,
       childAspectRatio: 1.2,
@@ -308,14 +308,15 @@ class _FinanceScreenState extends State<FinanceScreen> {
           context,
           icon: Icons.attach_money,
           label: 'Ticket Promedio',
-          value: '\$${avgTicket.toStringAsFixed(2)}',
+          value: '\$${profitLoss.averageTicket.toStringAsFixed(2)}',
           color: Colors.orange,
         ),
+
         _buildMetricCard(
           context,
           icon: Icons.trending_up,
           label: 'Ganancia por Venta',
-          value: '\$${profitPerSale.toStringAsFixed(2)}',
+          value: '\$${profitLoss.averageProfitPerSale.toStringAsFixed(2)}',
           color: Colors.green,
         ),
       ],
@@ -492,6 +493,47 @@ class _FinanceScreenState extends State<FinanceScreen> {
           overflow: TextOverflow.ellipsis,
         ),
       ],
+    );
+  }
+
+  Widget _filterChip(String label, SalesFilter filter) {
+    final isSelected = _currentFilter.type == filter.type;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: ActionChip(
+        label: Text(
+          label,
+          style: TextStyle(color: isSelected ? Colors.white : null),
+        ),
+        backgroundColor: isSelected ? Colors.blue : null,
+        onPressed: () {
+          setState(() {
+            _currentFilter = filter;
+          });
+          _loadFinances();
+        },
+      ),
+    );
+  }
+
+  Widget _buildFilterBar() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _filterChip("Hoy", SalesFilter.day(DateTime.now())),
+          _filterChip("Mes", SalesFilter.month(DateTime.now())),
+          _filterChip("Año", SalesFilter.year(DateTime.now())),
+          _filterChip(
+            "Custom",
+            SalesFilter.custom(
+              DateTime.now().subtract(const Duration(days: 30)),
+              DateTime.now(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

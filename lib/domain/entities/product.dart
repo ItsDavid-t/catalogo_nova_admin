@@ -24,6 +24,7 @@ class Product {
   final int lowStockAlert;
   final double costPrice;
   final double sellPrice;
+  final String currency;
   final String imgUrl;
   final ProductStatus status;
   final DateTime createdAt;
@@ -39,6 +40,7 @@ class Product {
     required this.sellPrice,
     required this.stock,
     this.lowStockAlert = 0,
+    this.currency = 'USD',
     required this.imgUrl,
     required this.status,
     required this.createdAt,
@@ -55,6 +57,7 @@ class Product {
       'category_id': categoryId,
       'cost_price': costPrice,
       'sell_price': sellPrice,
+      'currency': currency,
       'img_url': imgUrl,
       'status': status.name,
       'created_at': createdAt.toIso8601String(),
@@ -82,6 +85,7 @@ class Product {
       sellPrice: (map['sell_price'] ?? 0.0) is num
           ? (map['sell_price']).toDouble()
           : double.tryParse((map['sell_price']).toString()) ?? 0.0,
+      currency: (map['currency'] ?? 'USD') as String,
       imgUrl: (map['img_url'] ?? '') as String,
       status: _statusFromString((map['status'] ?? 'available') as String),
       createdAt: rawDate is String
@@ -116,6 +120,7 @@ class Product {
     int? lowStockAlert,
     double? costPrice,
     double? sellPrice,
+    String? currency,
     String? imgUrl,
     ProductStatus? status,
     DateTime? createdAt,
@@ -131,6 +136,7 @@ class Product {
       shopId: shopId ?? this.shopId,
       costPrice: costPrice ?? this.costPrice,
       sellPrice: sellPrice ?? this.sellPrice,
+      currency: currency ?? this.currency,
       imgUrl: imgUrl ?? this.imgUrl,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,

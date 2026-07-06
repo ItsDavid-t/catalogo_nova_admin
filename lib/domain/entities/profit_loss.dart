@@ -16,6 +16,10 @@ class ProfitLoss {
     required this.salesCount,
     required this.byProduct,
   });
+  double get averageTicket => salesCount == 0 ? 0 : totalRevenue / salesCount;
+
+  double get averageProfitPerSale =>
+      salesCount == 0 ? 0 : grossProfit / salesCount;
 }
 
 class ProductProfit {

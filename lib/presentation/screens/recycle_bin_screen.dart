@@ -233,27 +233,29 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
           onDismissed: (_) => _removeProduct(products[index].id!),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            child: Stack(
+            child: Row(
               children: [
-                Opacity(
-                  opacity: 0.5,
-                  child: ProductCard(
-                    product: products[index],
-                    onReadonly: true,
+                Expanded(
+                  child: Opacity(
+                    opacity: 0.5,
+                    child: ProductCard(
+                      product: products[index],
+                      onReadonly: true,
+                    ),
                   ),
                 ),
-                Positioned(
-                  right: 15,
-                  top: 23,
+                Padding(
+                  padding: const EdgeInsets.only(left: 8),
                   child: IconButton(
                     onPressed: () {
                       _restoreProduct(products[index]);
                     },
-                    icon: Icon(
+                    icon: const Icon(
                       Icons.replay_circle_filled,
                       color: Colors.blueAccent,
-                      size: 32,
+                      size: 28,
                     ),
+                    tooltip: 'Restaurar producto',
                   ),
                 ),
               ],

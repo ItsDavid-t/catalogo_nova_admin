@@ -1,8 +1,13 @@
+import 'dart:typed_data';
+
+import 'package:echo_stock/domain/core/di/service_locator.dart';
 import 'package:echo_stock/domain/entities/shop_profile.dart';
+import 'package:echo_stock/domain/usecases/shop_profile/upload_shop_profile_image.dart';
 import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
 import 'package:echo_stock/presentation/cubit/auth/auth_state.dart';
 import 'package:echo_stock/presentation/cubit/shop_profile/shop_profile_cubit.dart';
 import 'package:echo_stock/presentation/cubit/shop_profile/shop_profile_state.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -20,18 +25,73 @@ class _ShopProfileFormScreenState extends State<ShopProfileFormScreen> {
   final _shopNameController = TextEditingController();
   final _whatsappController = TextEditingController();
   final _telegramController = TextEditingController();
+  final _descriptionController = TextEditingController();
   final _logoUrlController = TextEditingController();
+  Uint8List? _selectedLogoBytes;
+  String? _selectedLogoName;
+  bool _isUploadingLogo = false;
 
   @override
   void dispose() {
     _shopNameController.dispose();
     _whatsappController.dispose();
     _telegramController.dispose();
+    _descriptionController.dispose();
     _logoUrlController.dispose();
     super.dispose();
   }
 
-  void _saveShopProfile() {
+  Future<void> _pickLogoImage() async {
+    final result = await openFile(
+      acceptedTypeGroups: [
+        XTypeGroup(label: 'images', extensions: ['png', 'jpg', 'jpeg', 'gif']),
+      ],
+    );
+    if (result == null) return;
+
+    final bytes = await result.readAsBytes();
+    setState(() {
+      _selectedLogoBytes = bytes;
+      _selectedLogoName = result.name;
+    });
+  }
+
+  Future<String?> _uploadLogoIfNeeded() async {
+    if (_selectedLogoBytes == null || _selectedLogoName == null) {
+      return _normalizeOptional(_logoUrlController.text);
+    }
+
+    setState(() => _isUploadingLogo = true);
+    final result = await sl<UploadShopProfileImage>()(
+      _selectedLogoBytes!,
+      _selectedLogoName!,
+    );
+    String? logoUrl;
+    result.fold(
+      (failure) {
+        if (mounted) {
+          setState(() => _isUploadingLogo = false);
+        }
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(failure.message)));
+      },
+      (url) {
+        logoUrl = url;
+        if (mounted) {
+          setState(() {
+            _logoUrlController.text = url;
+            _selectedLogoBytes = null;
+            _selectedLogoName = null;
+            _isUploadingLogo = false;
+          });
+        }
+      },
+    );
+    return logoUrl;
+  }
+
+  void _saveShopProfile() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -41,12 +101,22 @@ class _ShopProfileFormScreenState extends State<ShopProfileFormScreen> {
         ? authState.userSession.userId
         : widget.userId;
 
+    final logoUrl = await _uploadLogoIfNeeded();
+    if (_selectedLogoBytes != null) {
+      return;
+    }
+
+    final description = _descriptionController.text.trim().isEmpty
+        ? 'Sin descripción de tienda'
+        : _descriptionController.text.trim();
+
     final profile = ShopProfile(
       id: userId,
       shopName: _shopNameController.text.trim(),
       whatsappNumber: _whatsappController.text.trim(),
       telegramUsername: _normalizeTelegram(_telegramController.text),
-      logoUrl: _normalizeOptional(_logoUrlController.text),
+      description: description,
+      logoUrl: logoUrl,
       createdAt: DateTime.now(),
     );
 
@@ -152,31 +222,73 @@ class _ShopProfileFormScreenState extends State<ShopProfileFormScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
-                    controller: _logoUrlController,
-                    keyboardType: TextInputType.url,
+                    controller: _descriptionController,
+                    maxLines: 3,
                     decoration: const InputDecoration(
-                      labelText: 'Logo URL (opcional)',
-                      hintText: 'https://...',
+                      labelText: 'Descripción de la tienda (opcional)',
+                      hintText: 'Cuéntanos sobre tu tienda...',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (value) {
-                      final url = value?.trim() ?? '';
-                      if (url.isEmpty) return null;
-                      final uri = Uri.tryParse(url);
-                      final isValid =
-                          uri != null &&
-                          (uri.scheme == 'http' || uri.scheme == 'https') &&
-                          uri.host.isNotEmpty;
-                      if (!isValid) {
-                        return 'URL de logo invalida';
-                      }
-                      return null;
-                    },
                   ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _logoUrlController,
+                          keyboardType: TextInputType.url,
+                          decoration: const InputDecoration(
+                            labelText: 'Logo URL (opcional)',
+                            hintText: 'https://...',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            final url = value?.trim() ?? '';
+                            if (url.isEmpty) return null;
+                            final uri = Uri.tryParse(url);
+                            final isValid =
+                                uri != null &&
+                                (uri.scheme == 'http' ||
+                                    uri.scheme == 'https') &&
+                                uri.host.isNotEmpty;
+                            if (!isValid) {
+                              return 'URL de logo invalida';
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      ElevatedButton.icon(
+                        onPressed: _isUploadingLogo ? null : _pickLogoImage,
+                        icon: _isUploadingLogo
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.upload_file),
+                        label: Text(
+                          _isUploadingLogo ? 'Subiendo...' : 'Cargar',
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_selectedLogoName != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Archivo seleccionado: $_selectedLogoName',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
                   const SizedBox(height: 24),
                   FilledButton(
-                    onPressed: isSaving ? null : _saveShopProfile,
-                    child: isSaving
+                    onPressed: isSaving || _isUploadingLogo
+                        ? null
+                        : _saveShopProfile,
+                    child: isSaving || _isUploadingLogo
                         ? const SizedBox(
                             width: 20,
                             height: 20,
