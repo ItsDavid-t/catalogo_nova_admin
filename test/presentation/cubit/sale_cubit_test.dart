@@ -7,8 +7,10 @@ import 'package:echo_stock/domain/entities/sale.dart';
 import 'package:echo_stock/domain/repositories/product_repository.dart';
 import 'package:echo_stock/domain/repositories/sale_repository.dart';
 import 'package:echo_stock/domain/core/filters/sale_filters.dart';
+import 'package:echo_stock/domain/usecases/finance/build_finance_insights.dart';
 import 'package:echo_stock/domain/usecases/finance/build_product_lookup.dart';
 import 'package:echo_stock/domain/usecases/finance/calculate_profit_loss.dart';
+import 'package:echo_stock/domain/usecases/alerts/evaluate_alert_rules.dart';
 import 'package:echo_stock/domain/usecases/sale/create_sale.dart';
 import 'package:echo_stock/domain/usecases/sale/process_sale.dart';
 import 'package:echo_stock/domain/usecases/sale/get_sales_by_shop.dart';
@@ -143,6 +145,8 @@ SaleCubit createSaleCubit({
     processSale,
     CalculateProfitLoss(),
     const BuildProductLookup(),
+    const BuildFinanceInsights(),
+    EvaluateAlertRules(),
   );
 }
 

@@ -1,7 +1,7 @@
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
 import 'package:echo_stock/presentation/cubit/product/product_state.dart';
 import 'package:echo_stock/domain/entities/product.dart';
-import 'package:echo_stock/presentation/widgets/classification_filter_list.dart';
+import 'package:echo_stock/presentation/widgets/category/classification_filter_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -24,9 +24,9 @@ class _ProductFiltrerPanelState extends State<ProductFiltrerPanel> {
       case ProductOption.statusReserved:
         return 'Reservado primero';
       case ProductOption.statusOutOfStock:
-        return 'Sin stock primero';
+        return 'Agotado primero';
       case ProductOption.stockLow:
-        return 'Stock menor';
+        return 'Existencias bajas';
     }
   }
 
@@ -92,7 +92,7 @@ class _ProductFiltrerPanelState extends State<ProductFiltrerPanel> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: SwitchListTile(
-                  title: const Text('Poco Stock'),
+                  title: const Text('Existencias bajas'),
                   subtitle: const Text(
                     'Mostrar solo productos por debajo del mínimo',
                   ),

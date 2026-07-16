@@ -8,7 +8,7 @@ extension ProductStatusLabel on ProductStatus {
       case ProductStatus.reserved:
         return 'Reservado';
       case ProductStatus.outOfStock:
-        return 'Sin stock';
+        return 'Sin existencias';
     }
   }
 }

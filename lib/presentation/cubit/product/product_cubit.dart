@@ -2,7 +2,6 @@ import 'dart:typed_data';
 import 'dart:developer' as developer;
 
 import 'package:echo_stock/domain/entities/product.dart';
-import 'package:collection/collection.dart';
 import 'package:echo_stock/domain/usecases/product/add_product.dart';
 import 'package:echo_stock/domain/usecases/product/archive_product.dart';
 import 'package:echo_stock/domain/usecases/product/delete_product.dart';
@@ -261,13 +260,17 @@ class ProductCubit extends Cubit<ProductState> {
     final result = await _getAllProducts(shopId: _shopId);
     result.fold((failure) => emit(ProductError(failure.message)), (products) {
       final archived = products
-          .where((product) => product.status == ProductStatus.reserved)
+          .where(
+            (product) =>
+                product.status == ProductStatus.reserved ||
+                product.status == ProductStatus.outOfStock,
+          )
           .toList();
       final filtered = _applyFilters(
         archived,
         null,
         [],
-        [ProductStatus.reserved],
+        [ProductStatus.reserved, ProductStatus.outOfStock],
         ProductOption.nameAz,
         false,
         false,
@@ -278,7 +281,7 @@ class ProductCubit extends Cubit<ProductState> {
           filtered,
           null,
           [],
-          [ProductStatus.reserved],
+          [ProductStatus.reserved, ProductStatus.outOfStock],
           false,
           ProductOption.nameAz,
           false,
@@ -450,6 +453,15 @@ class ProductCubit extends Cubit<ProductState> {
         ),
       );
     }
+  }
+
+  Future<void> restoreProduct(Product product, int quantity) async {
+    final restoredProduct = product.copyWith(
+      stock: quantity,
+      status: ProductStatus.available,
+    );
+
+    await updateProduct(restoredProduct);
   }
 
   Future<void> addProduct(Product product) async {

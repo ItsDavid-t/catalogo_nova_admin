@@ -8,6 +8,7 @@ import 'package:echo_stock/domain/repositories/category_repository.dart';
 import 'package:echo_stock/domain/repositories/product_repository.dart';
 import 'package:echo_stock/domain/repositories/sale_repository.dart';
 import 'package:echo_stock/domain/repositories/shop_profile_repository.dart';
+import 'package:echo_stock/domain/usecases/alerts/evaluate_alert_rules.dart';
 import 'package:echo_stock/domain/usecases/auth/get_current_session.dart';
 import 'package:echo_stock/domain/usecases/auth/sign_in.dart';
 import 'package:echo_stock/domain/usecases/auth/sign_out.dart';
@@ -31,6 +32,7 @@ import 'package:echo_stock/domain/usecases/sale/create_sale.dart';
 import 'package:echo_stock/domain/usecases/sale/get_sales_by_shop.dart';
 import 'package:echo_stock/domain/usecases/sale/process_sale.dart';
 import 'package:echo_stock/domain/usecases/finance/build_product_lookup.dart';
+import 'package:echo_stock/domain/usecases/finance/build_finance_insights.dart';
 import 'package:echo_stock/domain/usecases/finance/calculate_profit_loss.dart';
 import 'package:echo_stock/domain/usecases/shop_profile/get_shop_profile.dart';
 import 'package:echo_stock/domain/usecases/shop_profile/upload_shop_profile_image.dart';
@@ -84,7 +86,9 @@ Future<void> init() async {
     ),
   );
   sl.registerFactory(() => CalculateProfitLoss());
+  sl.registerFactory(() => EvaluateAlertRules());
   sl.registerFactory(() => const BuildProductLookup());
+  sl.registerFactory(() => const BuildFinanceInsights());
 
   sl.registerFactory(() => AddProduct(sl()));
 
@@ -126,6 +130,8 @@ Future<void> init() async {
       sl<ProcessSale>(),
       sl<CalculateProfitLoss>(),
       sl<BuildProductLookup>(),
+      sl<BuildFinanceInsights>(),
+      sl<EvaluateAlertRules>(),
     ),
   );
 

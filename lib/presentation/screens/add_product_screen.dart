@@ -550,7 +550,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     TextFormField(
                       controller: _stockController,
                       decoration: const InputDecoration(
-                        labelText: 'Stock actual',
+                        labelText: 'Existencias actuales',
                         prefixIcon: Icon(Icons.layers),
                       ),
                       keyboardType: TextInputType.number,
@@ -576,7 +576,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     TextFormField(
                       controller: _lowStockAlertController,
                       decoration: const InputDecoration(
-                        labelText: 'Stock mínimo (alerta)',
+                        labelText: 'Existencias mínimas (alerta)',
                         prefixIcon: Icon(Icons.notification_important),
                       ),
                       keyboardType: TextInputType.number,

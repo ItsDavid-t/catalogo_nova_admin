@@ -14,16 +14,15 @@ class ShopProfileCubit extends Cubit<ShopProfileState> {
   Future<void> loadProfile(String userId) async {
     emit(const ShopProfileLoading());
     final result = await _getShopProfile(userId);
-    result.fold(
-      (failure) => emit(ShopProfileFailure(failure.message)),
-      (profile) {
-        if (profile == null) {
-          emit(ShopProfileMissing(userId));
-        } else {
-          emit(ShopProfileLoaded(profile));
-        }
-      },
-    );
+    result.fold((failure) => emit(ShopProfileFailure(failure.message)), (
+      profile,
+    ) {
+      if (profile == null) {
+        emit(ShopProfileMissing(userId));
+      } else {
+        emit(ShopProfileLoaded(profile));
+      }
+    });
   }
 
   Future<void> saveProfile(ShopProfile profile) async {

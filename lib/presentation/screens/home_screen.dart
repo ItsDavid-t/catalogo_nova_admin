@@ -6,19 +6,19 @@ import 'package:echo_stock/presentation/cubit/product/product_state.dart';
 import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
 import 'package:echo_stock/presentation/cubit/shop_profile/shop_profile_cubit.dart';
 import 'package:echo_stock/presentation/cubit/shop_profile/shop_profile_state.dart';
-import 'package:echo_stock/presentation/widgets/category_list.dart';
-import 'package:echo_stock/presentation/widgets/category_list_skeleton.dart';
+import 'package:echo_stock/presentation/widgets/category/category_list.dart';
+import 'package:echo_stock/presentation/widgets/category/category_list_skeleton.dart';
 import 'package:echo_stock/presentation/widgets/custom_drawer.dart';
 import 'package:echo_stock/presentation/widgets/custom_search_bar.dart';
 import 'package:echo_stock/presentation/widgets/empty_state.dart';
-import 'package:echo_stock/presentation/widgets/product_filtrer_panel.dart';
-import 'package:echo_stock/presentation/widgets/product_list_view.dart';
-import 'package:echo_stock/presentation/widgets/product_detail_overlay.dart';
+import 'package:echo_stock/presentation/widgets/product/product_filtrer_panel.dart';
+import 'package:echo_stock/presentation/widgets/product/product_list_view.dart';
+import 'package:echo_stock/presentation/widgets/product/product_detail_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:echo_stock/domain/entities/product.dart';
 import 'package:echo_stock/presentation/screens/add_product_screen.dart';
 import 'package:echo_stock/presentation/screens/account_edit_screen.dart';
-import 'package:echo_stock/presentation/widgets/product_list_skeleton.dart';
+import 'package:echo_stock/presentation/widgets/product/product_list_skeleton.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -204,7 +204,8 @@ class _HomeScreenState extends State<HomeScreen> {
           width: double.infinity,
           child: BlocBuilder<ShopProfileCubit, ShopProfileState>(
             builder: (context, shopProfileState) {
-              String shopName = 'Catálogo Admin';
+              String shopName = 'Mi tienda';
+
               if (shopProfileState is ShopProfileLoaded) {
                 shopName = shopProfileState.profile.shopName;
               }

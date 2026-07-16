@@ -41,7 +41,7 @@ class CategoryList extends StatelessWidget {
                 ),
                 showCheckmark: false,
                 selected: isLowStockSelected,
-                label: const Text('Poco Stock'),
+                label: const Text('Existencias bajas'),
                 onSelected: (_) => onLowStockSelected!(),
               ),
             );

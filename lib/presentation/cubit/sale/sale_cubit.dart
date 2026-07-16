@@ -1,7 +1,11 @@
+import 'package:echo_stock/domain/entities/alert_rule.dart';
 import 'package:echo_stock/domain/entities/cart_item.dart';
+import 'package:echo_stock/domain/entities/finance_insights.dart';
 import 'package:echo_stock/domain/entities/product.dart';
 import 'package:echo_stock/domain/entities/sale.dart';
 import 'package:echo_stock/domain/entities/sale_item.dart';
+import 'package:echo_stock/domain/usecases/alerts/evaluate_alert_rules.dart';
+import 'package:echo_stock/domain/usecases/finance/build_finance_insights.dart';
 import 'package:echo_stock/domain/usecases/finance/build_product_lookup.dart';
 import 'package:echo_stock/domain/usecases/finance/calculate_profit_loss.dart';
 import 'package:echo_stock/domain/usecases/sale/get_sales_by_shop.dart';
@@ -17,6 +21,8 @@ class SaleCubit extends Cubit<SaleState> {
   final ProcessSale _processSale;
   final CalculateProfitLoss _calculateProfitLoss;
   final BuildProductLookup _buildProductLookup;
+  final BuildFinanceInsights _buildFinanceInsights;
+  final EvaluateAlertRules _evaluateAlertRules;
 
   final List<CartItem> _cartItems = [];
   double _totalAmount = 0;
@@ -26,6 +32,8 @@ class SaleCubit extends Cubit<SaleState> {
     this._processSale,
     this._calculateProfitLoss,
     this._buildProductLookup,
+    this._buildFinanceInsights,
+    this._evaluateAlertRules,
   ) : super(const SaleInitial());
 
   List<CartItem> get cartItems => List.unmodifiable(_cartItems);
@@ -67,7 +75,7 @@ class SaleCubit extends Cubit<SaleState> {
 
   void addProductToCart(CartItem item) {
     if (item.availableStock <= 0) {
-      emit(const SaleFailure('Producto sin stock disponible'));
+      emit(const SaleFailure('Producto sin existencias disponibles'));
       _emitCart();
       return;
     }
@@ -79,9 +87,7 @@ class SaleCubit extends Cubit<SaleState> {
     if (index >= 0) {
       final current = _cartItems[index];
       if (!current.canIncrement) {
-        emit(
-          SaleFailure('Stock máximo alcanzado para "${current.productName}"'),
-        );
+        emit(SaleFailure('Máximo alcanzado para "${current.productName}"'));
         _emitCart();
         return;
       }
@@ -100,7 +106,7 @@ class SaleCubit extends Cubit<SaleState> {
 
     final current = _cartItems[index];
     if (!current.canIncrement) {
-      emit(SaleFailure('Stock máximo alcanzado para "${current.productName}"'));
+      emit(SaleFailure('Máximo alcanzado para "${current.productName}"'));
       _emitCart();
       return;
     }
@@ -190,5 +196,24 @@ class SaleCubit extends Cubit<SaleState> {
     List<Product> products,
   ) {
     return _buildProductLookup(products);
+  }
+
+  Future<List<FinanceInsights>> buildFinanceInsights(
+    List<Sale> sales, {
+    Map<int, String>? productNames,
+  }) {
+    return _buildFinanceInsights(sales, productNames: productNames);
+  }
+
+  Future<List<AlertRule>> evaluateAlertRules(
+    List<Product> products,
+    List<Sale> sales, {
+    Map<int, String>? productNames,
+  }) {
+    return _evaluateAlertRules(
+      products: products,
+      sales: sales,
+      productNames: productNames,
+    );
   }
 }

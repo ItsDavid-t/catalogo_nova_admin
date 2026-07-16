@@ -4,12 +4,12 @@ import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
 import 'package:echo_stock/presentation/cubit/category/category_state.dart';
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
 import 'package:echo_stock/presentation/cubit/product/product_state.dart';
-import 'package:echo_stock/presentation/widgets/category_list.dart';
-import 'package:echo_stock/presentation/widgets/category_list_skeleton.dart';
+import 'package:echo_stock/presentation/widgets/category/category_list.dart';
+import 'package:echo_stock/presentation/widgets/category/category_list_skeleton.dart';
 import 'package:echo_stock/presentation/widgets/custom_drawer.dart';
 import 'package:echo_stock/presentation/widgets/custom_search_bar.dart';
-import 'package:echo_stock/presentation/widgets/product_card.dart';
-import 'package:echo_stock/presentation/widgets/product_filtrer_panel.dart';
+import 'package:echo_stock/presentation/widgets/product/product_card.dart';
+import 'package:echo_stock/presentation/widgets/product/product_filtrer_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -46,20 +46,6 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Producto eliminado'),
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  void _restoreProduct(Product product) {
-    context.read<ProductCubit>().changeProductStatus(
-      product,
-      ProductStatus.available,
-    );
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Producto restaurado'),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -150,6 +136,7 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
                           );
                           context.read<ProductCubit>().filterByStatus([
                             ProductStatus.reserved,
+                            ProductStatus.outOfStock,
                           ]);
                         }
                       },
@@ -215,6 +202,64 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
     );
   }
 
+  void _showRestoreDialog(Product product) {
+    final controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Restaurar producto'),
+          content: TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: 'Cantidad actual'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancelar'),
+            ),
+
+            ElevatedButton(
+              onPressed: () {
+                final quantity = int.tryParse(controller.text);
+
+                if (quantity == null || quantity <= 0) {
+                  return;
+                }
+
+                context.read<ProductCubit>().restoreProduct(product, quantity);
+
+                Navigator.pop(context);
+              },
+              child: Text('Restaurar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _handleRestore(Product product) {
+    if (product.status == ProductStatus.reserved) {
+      context.read<ProductCubit>().restoreProduct(product, product.stock);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Producto restaurado'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      return;
+    }
+
+    if (product.status == ProductStatus.outOfStock) {
+      _showRestoreDialog(product);
+    }
+  }
+
   Widget _buildProductList(List<Product> products) {
     return ListView.builder(
       key: const ValueKey('recycle_list'),
@@ -248,7 +293,22 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
                   padding: const EdgeInsets.only(left: 8),
                   child: IconButton(
                     onPressed: () {
-                      _restoreProduct(products[index]);
+                      if (products[index].status == ProductStatus.reserved) {
+                        context.read<ProductCubit>().restoreProduct(
+                          products[index],
+                          products[index].stock,
+                        );
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Producto restaurado'),
+                            duration: Duration(seconds: 3),
+                          ),
+                        );
+                      } else if (products[index].status ==
+                          ProductStatus.outOfStock) {
+                        _showRestoreDialog(products[index]);
+                      }
                     },
                     icon: const Icon(
                       Icons.replay_circle_filled,

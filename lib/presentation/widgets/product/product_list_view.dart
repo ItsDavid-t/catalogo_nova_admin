@@ -1,5 +1,5 @@
 import 'package:echo_stock/domain/entities/product.dart';
-import 'package:echo_stock/presentation/widgets/product_card.dart';
+import 'package:echo_stock/presentation/widgets/product/product_card.dart';
 import 'package:flutter/material.dart';
 
 class ProductListView extends StatelessWidget {

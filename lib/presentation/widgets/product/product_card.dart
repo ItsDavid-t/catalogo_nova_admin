@@ -36,7 +36,6 @@ class ProductCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         child: Row(
           children: [
-            // Status indicator
             Container(
               width: 4,
               height: 40,
@@ -46,7 +45,7 @@ class ProductCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            // Product info
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

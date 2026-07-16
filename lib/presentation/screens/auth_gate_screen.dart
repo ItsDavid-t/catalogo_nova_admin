@@ -48,6 +48,7 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
           current is AuthUnauthenticated ||
           current is AuthFailure,
       listener: (context, state) {
+        debugPrint('AuthGate listener: $state');
         if (state is AuthAuthenticated) {
           _loadShopProfile(state.userSession.userId);
           return;
@@ -69,7 +70,9 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
           }
 
           if (state is AuthAuthenticated) {
-            _loadShopProfile(state.userSession.userId);
+            if (_loadedUserId != state.userSession.userId) {
+              _loadShopProfile(state.userSession.userId);
+            }
             return BlocConsumer<ShopProfileCubit, ShopProfileState>(
               listenWhen: (previous, current) =>
                   current is ShopProfileLoaded || current is ShopProfileSaved,
@@ -80,6 +83,12 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
                 }
               },
               builder: (context, shopState) {
+                if ((shopState is ShopProfileLoaded ||
+                        shopState is ShopProfileSaved) &&
+                    _catalogLoadedForUserId != state.userSession.userId) {
+                  _loadCatalogData(state.userSession.userId);
+                }
+
                 if (shopState is ShopProfileInitial ||
                     shopState is ShopProfileLoading) {
                   return const Scaffold(
@@ -93,7 +102,6 @@ class _AuthGateScreenState extends State<AuthGateScreen> {
 
                 if (shopState is ShopProfileLoaded ||
                     shopState is ShopProfileSaved) {
-                  _loadCatalogData(state.userSession.userId);
                   return const HomeScreen();
                 }
 

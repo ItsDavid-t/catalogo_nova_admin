@@ -1,4 +1,6 @@
 import 'package:echo_stock/domain/core/filters/sale_filters.dart';
+import 'package:echo_stock/domain/entities/alert_rule.dart';
+import 'package:echo_stock/domain/entities/finance_insights.dart';
 import 'package:echo_stock/domain/entities/profit_loss.dart';
 import 'package:echo_stock/domain/entities/sale.dart';
 import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
@@ -20,6 +22,10 @@ class FinanceScreen extends StatefulWidget {
 
 class _FinanceScreenState extends State<FinanceScreen> {
   SalesFilter _currentFilter = SalesFilter.month(DateTime.now());
+  DateTimeRange? _customRange;
+  List<FinanceInsights> _insights = [];
+  List<AlertRule> _alerts = [];
+
   @override
   void initState() {
     super.initState();
@@ -37,12 +43,19 @@ class _FinanceScreenState extends State<FinanceScreen> {
     await context.read<SaleCubit>().loadSales(shopId, filter: _currentFilter);
   }
 
-  void _calculateFinances(List<Sale> sales) {
+  Future<void> _calculateFinances(List<Sale> sales) async {
     final productState = context.read<ProductCubit>().state;
+
     if (productState is! ProductLoaded) return;
 
     final lookup = context.read<SaleCubit>().buildLookupFromProducts(
       productState.products,
+    );
+
+    final alerts = await context.read<SaleCubit>().evaluateAlertRules(
+      productState.products,
+      sales,
+      productNames: lookup.names,
     );
 
     context.read<SaleCubit>().calculateFinanceForSales(
@@ -50,6 +63,17 @@ class _FinanceScreenState extends State<FinanceScreen> {
       productCosts: lookup.costs,
       productNames: lookup.names,
     );
+
+    final insights = await context.read<SaleCubit>().buildFinanceInsights(
+      sales,
+      productNames: lookup.names,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _insights = insights;
+      _alerts = alerts;
+    });
   }
 
   @override
@@ -113,7 +137,6 @@ class _FinanceScreenState extends State<FinanceScreen> {
               }
               return _buildFinanceContent(context, state.profitLoss);
             }
-
             return _buildEmptyState(context);
           },
         ),
@@ -122,38 +145,53 @@ class _FinanceScreenState extends State<FinanceScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-
-        children: [
-          Icon(
-            Icons.point_of_sale_outlined,
-            size: 56,
-            color: Theme.of(context).colorScheme.secondary,
-          ),
-          const SizedBox(height: 16),
-          const Text('Aún no hay ventas registradas'),
-          const SizedBox(height: 8),
-          Text(
-            'Registra tu primera venta para ver ganancias aquí',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          FilledButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const NewSaleScreen()),
-              );
-            },
-            icon: const Icon(Icons.add_shopping_cart),
-            label: const Text('Registrar venta'),
-          ),
-        ],
+    return RefreshIndicator(
+      onRefresh: _loadFinances,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildFilterBar(),
+            const SizedBox(height: 16),
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.point_of_sale_outlined,
+                    size: 56,
+                    color: Theme.of(context).colorScheme.secondary,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Aún no hay ventas registradas'),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Registra tu primera venta para ver ganancias aquí',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NewSaleScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.add_shopping_cart),
+                    label: const Text('Registrar venta'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -172,6 +210,17 @@ class _FinanceScreenState extends State<FinanceScreen> {
             _buildSummarySection(context, profitLoss),
             const SizedBox(height: 24),
             _buildMetricsGrid(context, profitLoss),
+            const SizedBox(height: 24),
+
+            const SizedBox(height: 24),
+            if (_insights.isNotEmpty) ...[
+              _buildInsightsSection(context),
+              const SizedBox(height: 12),
+              if (_alerts.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _buildAlertsSection(context),
+              ],
+            ],
             const SizedBox(height: 24),
             if (profitLoss.byProduct.isNotEmpty) ...[
               Text(
@@ -496,6 +545,176 @@ class _FinanceScreenState extends State<FinanceScreen> {
     );
   }
 
+  Widget _buildInsightsSection(BuildContext context) {
+    final mostSold = _insights.isEmpty
+        ? null
+        : _insights.reduce((a, b) => b.quantity > a.quantity ? b : a);
+    final mostProfitable = _insights.isEmpty
+        ? null
+        : _insights.reduce((a, b) => b.profit > a.profit ? b : a);
+    final negativeProducts = _insights
+        .where((insight) => insight.profit < 0)
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Análisis',
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            _buildInsightCard(
+              context,
+              label: 'Más vendido',
+              title: mostSold?.productName ?? 'Sin datos',
+              value: mostSold != null ? '${mostSold.quantity} uds' : '-',
+              color: Colors.blue,
+            ),
+            _buildInsightCard(
+              context,
+              label: 'Más rentable',
+              title: mostProfitable?.productName ?? 'Sin datos',
+              value: mostProfitable != null
+                  ? '\$${mostProfitable.profit.toStringAsFixed(2)}'
+                  : '-',
+              color: Colors.green,
+            ),
+            _buildInsightCard(
+              context,
+              label: 'Margen negativo',
+              title: negativeProducts.isEmpty
+                  ? 'Ninguno'
+                  : negativeProducts.first.productName,
+              value: negativeProducts.isEmpty
+                  ? '0'
+                  : '${negativeProducts.length} productos',
+              color: negativeProducts.isEmpty ? Colors.grey : Colors.red,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInsightCard(
+    BuildContext context, {
+    required String label,
+    required String title,
+    required String value,
+    required Color color,
+  }) {
+    return SizedBox(
+      width: MediaQuery.of(context).size.width / 2.3,
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAlertsSection(BuildContext context) {
+    Color severityColor(AlertSeverity severity) {
+      switch (severity) {
+        case AlertSeverity.critical:
+          return Colors.red;
+        case AlertSeverity.warning:
+          return Colors.orange;
+        case AlertSeverity.info:
+          return Colors.blue;
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Alertas',
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 12),
+        Column(
+          children: _alerts
+              .map(
+                (alert) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: _buildAlertTile(
+                    context,
+                    alert,
+                    severityColor(alert.severity),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAlertTile(BuildContext context, AlertRule alert, Color color) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 1,
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: color.withValues(alpha: 0.12),
+          child: Icon(
+            alert.severity == AlertSeverity.critical
+                ? Icons.error
+                : alert.severity == AlertSeverity.warning
+                ? Icons.warning
+                : Icons.info,
+            color: color,
+          ),
+        ),
+        title: Text(
+          alert.title,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        subtitle: Text(alert.message),
+      ),
+    );
+  }
+
   Widget _filterChip(String label, SalesFilter filter) {
     final isSelected = _currentFilter.type == filter.type;
 
@@ -517,6 +736,54 @@ class _FinanceScreenState extends State<FinanceScreen> {
     );
   }
 
+  Widget _buildCustomFilterChip() {
+    final isSelected = _currentFilter.type == SalesTimeFilterType.custom;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: ActionChip(
+        label: Text(
+          'Personalizado',
+          style: TextStyle(color: isSelected ? Colors.white : null),
+        ),
+        backgroundColor: isSelected ? Colors.blue : null,
+        onPressed: () {
+          _selectCustomRange(context);
+        },
+      ),
+    );
+  }
+
+  Future<void> _selectCustomRange(BuildContext context) async {
+    final now = DateTime.now();
+    final initialRange =
+        _customRange ??
+        DateTimeRange(start: now.subtract(const Duration(days: 30)), end: now);
+
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(now.year - 1, 1, 1),
+      lastDate: now,
+      initialDateRange: initialRange,
+    );
+
+    if (picked == null) return;
+
+    setState(() {
+      _customRange = picked;
+      _currentFilter = SalesFilter.custom(
+        DateTime(picked.start.year, picked.start.month, picked.start.day),
+        DateTime(
+          picked.end.year,
+          picked.end.month,
+          picked.end.day,
+        ).add(const Duration(days: 1)),
+      );
+    });
+
+    await _loadFinances();
+  }
+
   Widget _buildFilterBar() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -525,13 +792,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
           _filterChip("Hoy", SalesFilter.day(DateTime.now())),
           _filterChip("Mes", SalesFilter.month(DateTime.now())),
           _filterChip("Año", SalesFilter.year(DateTime.now())),
-          _filterChip(
-            "Custom",
-            SalesFilter.custom(
-              DateTime.now().subtract(const Duration(days: 30)),
-              DateTime.now(),
-            ),
-          ),
+          _buildCustomFilterChip(),
         ],
       ),
     );

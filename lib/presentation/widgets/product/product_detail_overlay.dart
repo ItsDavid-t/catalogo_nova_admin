@@ -238,7 +238,7 @@ class _ProductDetailOverlayState extends State<ProductDetailOverlay> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Stock:',
+                                  'Existencias:',
                                   style: Theme.of(context).textTheme.bodyMedium,
                                 ),
                                 Text(
@@ -264,7 +264,7 @@ class _ProductDetailOverlayState extends State<ProductDetailOverlay> {
                           if (widget.product.lowStockAlert > 0) ...[
                             SizedBox(height: 8),
                             Text(
-                              'Alerta de stock mínimo: ${widget.product.lowStockAlert}',
+                              'Alerta de existencias mínimas: ${widget.product.lowStockAlert}',
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: Colors.grey),
                             ),
