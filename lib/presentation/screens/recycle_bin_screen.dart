@@ -241,25 +241,6 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
     );
   }
 
-  void _handleRestore(Product product) {
-    if (product.status == ProductStatus.reserved) {
-      context.read<ProductCubit>().restoreProduct(product, product.stock);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Producto restaurado'),
-          duration: Duration(seconds: 3),
-        ),
-      );
-
-      return;
-    }
-
-    if (product.status == ProductStatus.outOfStock) {
-      _showRestoreDialog(product);
-    }
-  }
-
   Widget _buildProductList(List<Product> products) {
     return ListView.builder(
       key: const ValueKey('recycle_list'),
