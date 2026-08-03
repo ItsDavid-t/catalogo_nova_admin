@@ -107,7 +107,6 @@ class CategoryRepositoryImpl implements CategoryRepository {
       if (category.shopId != null) {
         query = query.eq('shop_id', category.shopId!);
       }
-      // Evita duplicados dentro del mismo nivel jerárquico.
       // Se permite repetir nombres en ramas distintas.
       if (category.parentId == null) {
         query = query.isFilter('parent_id', null);

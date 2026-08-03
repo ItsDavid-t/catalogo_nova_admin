@@ -5,6 +5,7 @@ import 'package:echo_stock/domain/entities/product.dart';
 import 'package:echo_stock/domain/usecases/product/add_product.dart';
 import 'package:echo_stock/domain/usecases/product/archive_product.dart';
 import 'package:echo_stock/domain/usecases/product/delete_product.dart';
+import 'package:echo_stock/domain/usecases/product/delete_product_image.dart';
 import 'package:echo_stock/domain/usecases/product/get_all_products.dart';
 import 'package:echo_stock/domain/usecases/product/get_products_by_categories.dart';
 import 'package:echo_stock/domain/usecases/product/upload_product_image.dart';
@@ -20,6 +21,7 @@ class ProductCubit extends Cubit<ProductState> {
   final DeleteProduct _deleteProduct;
   final GetProductsByCategories _getProductsByCategories;
   final ArchiveProduct _archiveProduct;
+  final DeleteProductImage _deleteProductImage;
 
   String? _shopId;
 
@@ -31,6 +33,7 @@ class ProductCubit extends Cubit<ProductState> {
     this._deleteProduct,
     this._getProductsByCategories,
     this._archiveProduct,
+    this._deleteProductImage,
   ) : super(ProductInitial());
 
   void reset() {
@@ -38,10 +41,6 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> loadProducts({String? shopId}) async {
-    developer.log(
-      'loadProducts called shopId=$shopId currentState=${state.runtimeType}',
-      name: 'ProductCubit',
-    );
     if (shopId != null) {
       _shopId = shopId;
     }
@@ -110,10 +109,6 @@ class ProductCubit extends Cubit<ProductState> {
   }
 
   Future<void> loadProductsByCategories(int? categoryId) async {
-    developer.log(
-      'loadProductsByCategories called categoryId=$categoryId currentState=${state.runtimeType}',
-      name: 'ProductCubit',
-    );
     final currentState = state;
     if (categoryId == null) {
       loadProducts();
@@ -177,7 +172,6 @@ class ProductCubit extends Cubit<ProductState> {
     final currentState = state;
 
     if (currentState is ProductLoaded) {
-      developer.log('changeSortOption: $sortOption', name: 'ProductCubit');
       final filtered = _applyFilters(
         currentState.products,
         currentState.selectedCategoryId,
@@ -376,7 +370,6 @@ class ProductCubit extends Cubit<ProductState> {
   void filterByStatus(List<ProductStatus> statusList) {
     final currentState = state;
     if (currentState is ProductLoaded) {
-      developer.log('filterByStatus: $statusList', name: 'ProductCubit');
       final filtered = _applyFilters(
         currentState.products,
         currentState.selectedCategoryId,
@@ -464,35 +457,77 @@ class ProductCubit extends Cubit<ProductState> {
     await updateProduct(restoredProduct);
   }
 
-  Future<void> addProduct(Product product) async {
+  Future<bool> addProduct(Product product) async {
     final syncedProduct = product.normalize();
     final result = await _addProduct(syncedProduct);
-    result.fold((failure) => emit(ProductError(failure.message)), (_) {
-      emit(const ProductActionSucces('Producto agregado correctamente'));
-      loadProducts();
-    });
+
+    return result.fold(
+      (failure) {
+        emit(ProductError(failure.message));
+        return false;
+      },
+      (_) {
+        emit(const ProductActionSucces('Producto agregado correctamente'));
+        loadProducts();
+        return true;
+      },
+    );
   }
 
-  Future<void> updateProduct(Product product) async {
+  Future<bool> updateProduct(Product product) async {
     final syncedProduct = product.normalize();
     final result = await _upgrateProduct(syncedProduct);
-    result.fold((failure) => emit(ProductError(failure.message)), (_) {
-      final previousState = state;
-      emit(const ProductActionSucces('Producto actualizado correctamente'));
-      _reloadCurrentList(previousState);
-    });
+    return result.fold(
+      (failure) {
+        emit(ProductError(failure.message));
+        return false;
+      },
+      (_) {
+        final previousState = state;
+        emit(const ProductActionSucces('Producto actualizado correctamente'));
+        _reloadCurrentList(previousState);
+        return true;
+      },
+    );
   }
 
   Future<void> archiveProduct(int id) async {
+    final currentState = state;
+
+    if (currentState is ProductLoaded) {
+      emit(
+        currentState.copyWith(
+          products: currentState.products.where((p) => p.id != id).toList(),
+          filteredProducts: currentState.filteredProducts
+              .where((p) => p.id != id)
+              .toList(),
+        ),
+      );
+    }
+
     final result = await _archiveProduct(id);
+
+    result.fold(
+      (failure) {
+        emit(ProductError(failure.message));
+        _reloadCurrentList();
+      },
+      (_) {
+        _reloadCurrentList();
+      },
+    );
+  }
+
+  Future<void> deleteProduct(int id) async {
+    final result = await _deleteProduct(id);
     result.fold(
       (failure) => emit(ProductError(failure.message)),
       (_) => _reloadCurrentList(),
     );
   }
 
-  Future<void> deleteProduct(int id) async {
-    final result = await _deleteProduct(id);
+  Future<void> deleteProductImage(String imgUrl) async {
+    final result = await _deleteProductImage(imgUrl);
     result.fold(
       (failure) => emit(ProductError(failure.message)),
       (_) => _reloadCurrentList(),
@@ -512,12 +547,15 @@ class ProductCubit extends Cubit<ProductState> {
     await updateProduct(product.copyWith(status: newStatus));
   }
 
-  Future<String?> uploadProductImage(Uint8List bytes, String fileName) async {
+  Future<Map<String, String>?> uploadProductImage(
+    Uint8List bytes,
+    String fileName,
+  ) async {
     final result = await _uploadProductImage(bytes, fileName);
     return result.fold((failure) {
       emit(ProductError(failure.message));
       return null;
-    }, (url) => url);
+    }, (map) => map);
   }
 
   void _reloadCurrentList([ProductState? oldState]) {

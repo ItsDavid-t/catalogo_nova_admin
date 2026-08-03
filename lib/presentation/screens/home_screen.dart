@@ -46,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _removeProduct(Product product) {
-    ScaffoldMessenger.of(context).clearSnackBars();
+    dismissAppSnackBars(context);
     context.read<ProductCubit>().archiveProduct(product.id!);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -105,7 +105,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     if (state is ProductLoaded) {
-      // update cache with last known good filtered list
       _cachedFilteredProducts = state.filteredProducts;
       if (state.products.isEmpty) {
         return ListView(
@@ -204,12 +203,9 @@ class _HomeScreenState extends State<HomeScreen> {
           width: double.infinity,
           child: BlocBuilder<ShopProfileCubit, ShopProfileState>(
             builder: (context, shopProfileState) {
-              String shopName = 'Mi tienda';
-
-              if (shopProfileState is ShopProfileLoaded) {
-                shopName = shopProfileState.profile.shopName;
-              }
-
+              String shopName = shopProfileState is ShopProfileLoaded
+                  ? shopProfileState.profile.shopName
+                  : 'Mi tienda';
               return CustomSearchBar(
                 isTitle: isTitle,
                 onCancel: () => context.read<ProductCubit>().searchProducts(''),

@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+void dismissAppSnackBars(BuildContext context) {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.hideCurrentSnackBar();
+}
+
 void showAppSnackBar(
   BuildContext context, {
   required String message,
@@ -44,7 +49,10 @@ Widget buildInlineErrorBanner({
             spacing: 8,
             children: [
               if (onRetry != null)
-                TextButton(onPressed: onRetry, child: Text(retryLabel ?? 'Reintentar')),
+                TextButton(
+                  onPressed: onRetry,
+                  child: Text(retryLabel ?? 'Reintentar'),
+                ),
               if (onSecondaryAction != null)
                 TextButton(
                   onPressed: onSecondaryAction,

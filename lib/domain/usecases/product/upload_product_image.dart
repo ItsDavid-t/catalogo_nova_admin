@@ -9,7 +9,10 @@ class UploadProductImage {
 
   UploadProductImage(this._repository);
 
-  Future<Either<Failure, String>> call(Uint8List bytes, String fileName) async {
+  Future<Either<Failure, Map<String, String>>> call(
+    Uint8List bytes,
+    String fileName,
+  ) async {
     return await _repository.uploadProductImage(bytes, fileName);
   }
 }

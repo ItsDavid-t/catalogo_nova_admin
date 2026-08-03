@@ -1,0 +1,19 @@
+{
+  "tasks": {
+    "dev": "deno run --allow-all --env supabase/functions/delete-image/index.ts"
+  },
+  "imports": {
+    "https://esm.sh/@supabase/supabase-js@2.38.4": "https://esm.sh/@supabase/supabase-js@2.38.4"
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "fmt": {
+    "semiColons": true,
+    "singleQuote": false,
+    "lineWidth": 80
+  },
+  "exclude": ["build/", "dist/", "node_modules/"]
+}

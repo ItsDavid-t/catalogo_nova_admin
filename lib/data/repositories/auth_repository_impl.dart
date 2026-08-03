@@ -85,6 +85,9 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, UserSession?>> getCurrentSession() async {
     try {
       final session = _supabase.auth.currentSession;
+      developer.log("SESSION: $session");
+      developer.log("USER: ${session?.user.id}");
+      developer.log("TOKEN: ${session?.accessToken.substring(0, 20)}...");
       final user = session?.user;
       if (user == null) {
         return const Right(null);

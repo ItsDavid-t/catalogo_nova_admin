@@ -23,6 +23,7 @@ import 'package:echo_stock/domain/usecases/category/get_subcategories.dart';
 import 'package:echo_stock/domain/usecases/product/add_product.dart';
 import 'package:echo_stock/domain/usecases/product/archive_product.dart';
 import 'package:echo_stock/domain/usecases/product/delete_product.dart';
+import 'package:echo_stock/domain/usecases/product/delete_product_image.dart';
 import 'package:echo_stock/domain/usecases/product/get_all_products.dart';
 import 'package:echo_stock/domain/usecases/product/get_out_of_stock_product.dart';
 import 'package:echo_stock/domain/usecases/product/get_products_by_categories.dart';
@@ -104,6 +105,8 @@ Future<void> init() async {
 
   sl.registerFactory(() => DeleteProduct(sl()));
 
+  sl.registerFactory(() => DeleteProductImage(sl()));
+
   sl.registerFactory(() => ArchiveProduct(sl()));
 
   sl.registerFactory(() => GetAllCategories(sl()));
@@ -154,6 +157,7 @@ Future<void> init() async {
       sl<DeleteProduct>(),
       sl<GetProductsByCategories>(),
       sl<ArchiveProduct>(),
+      sl<DeleteProductImage>(),
     ),
   );
 

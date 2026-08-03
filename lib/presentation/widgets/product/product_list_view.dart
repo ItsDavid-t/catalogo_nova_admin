@@ -25,7 +25,7 @@ class ProductListView extends StatelessWidget {
       itemBuilder: (context, index) {
         final product = products[index];
         return Dismissible(
-          key: Key(product.id.toString()),
+          key: ValueKey(products[index].id),
           direction: DismissDirection.endToStart,
           background: Container(
             color: Colors.redAccent,

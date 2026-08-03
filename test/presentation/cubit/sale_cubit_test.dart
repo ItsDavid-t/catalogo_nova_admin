@@ -112,7 +112,7 @@ class FakeProductRepository implements ProductRepository {
   }
 
   @override
-  Future<Either<Failure, String>> uploadProductImage(
+  Future<Either<Failure, Map<String, String>>> uploadProductImage(
     Uint8List bytes,
     String fileName,
   ) {

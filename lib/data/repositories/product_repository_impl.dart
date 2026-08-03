@@ -13,7 +13,6 @@ class ProductRepositoryImpl implements ProductRepository {
 
   ProductRepositoryImpl(this._superBaseClient);
 
-  ///Para obtener todos los productos
   @override
   Future<Either<Failure, List<Product>>> getAllProducts(String? shopId) async {
     try {
@@ -32,7 +31,6 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  ///Para obtener los producto según su categoría
   @override
   Future<Either<Failure, List<Product>>> getProductsByCategories(
     int categoryId,
@@ -53,7 +51,6 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  ///Para obtener apartir de una categoria principal todas sus subcategorias
   Future<List<int>> _fetchCategoryAndDescendants(int categoryId) async {
     final categoryIds = <int>{categoryId};
     final queue = <int>[categoryId];
@@ -78,7 +75,6 @@ class ProductRepositoryImpl implements ProductRepository {
     return categoryIds.toList();
   }
 
-  ///Para obtener los productos agotados
   @override
   Future<Either<Failure, List<Product>>> getOutOfStockProducts() async {
     try {
@@ -95,7 +91,6 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  ///Para obtener los productos agotados pero esta vez filtrados por su categoria
   @override
   Future<Either<Failure, List<Product>>> getOutOfStockProductsByCategories(
     int categoryId,
@@ -115,7 +110,6 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  ///Para añadir un prodcuto le quito el id porq es autoincremental
   @override
   Future<Either<Failure, Unit>> addProduct(Product product) async {
     try {
@@ -132,7 +126,6 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  ///Aqui archivo un producto le paso el id y lo pongo en estado de reserva
   @override
   Future<Either<Failure, Unit>> archiveProduct(int id) async {
     if (id <= 0) {
@@ -172,7 +165,13 @@ class ProductRepositoryImpl implements ProductRepository {
         await _cleanupOrphanedCategory(product.categoryId!);
       }
 
-      if (product.imgUrl.isNotEmpty) {
+      developer.log(
+        'Deleting product image: imgPath=${product.imgPath}, imgUrl=${product.imgUrl}',
+      );
+
+      if (product.imgPath != null && product.imgPath!.isNotEmpty) {
+        await _deleteProductImage(product.imgPath!);
+      } else if (product.imgUrl.isNotEmpty) {
         await _deleteProductImage(product.imgUrl);
       }
 
@@ -212,7 +211,7 @@ class ProductRepositoryImpl implements ProductRepository {
     final response = await _superBaseClient
         .from('Product')
         .select('id')
-        .eq('categoryId', categoryId)
+        .eq('category_id', categoryId)
         .limit(1);
     return (response as List).isNotEmpty;
   }
@@ -249,8 +248,9 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   ///Para subir la imagen del producto en forma binaria a la base datos
+
   @override
-  Future<Either<Failure, String>> uploadProductImage(
+  Future<Either<Failure, Map<String, String>>> uploadProductImage(
     Uint8List bytes,
     String fileName,
   ) async {
@@ -264,9 +264,8 @@ class ProductRepositoryImpl implements ProductRepository {
         fileOptions: const FileOptions(upsert: false),
       );
       final publicUrl = storage.getPublicUrl(path);
-      return Right(publicUrl);
+      return Right({'url': publicUrl, 'path': path});
     } catch (e) {
-      developer.log('ERROR DE SUPABASE STORAGE: $e');
       return Left(DatabaseFailure('Error al subir la imagen'));
     }
   }
@@ -322,19 +321,39 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  ///Para eliminar la imagen usando su url publica
-  Future<void> _deleteProductImage(String imgUrl) async {
+  /// Elimina la imagen usando ruta interna o URL pública.
+  Future<void> _deleteProductImage(String imageReference) async {
+    final path = _getStoragePathFromReference(imageReference);
+
     try {
-      final uri = Uri.parse(imgUrl);
-      final pathSegments = uri.pathSegments;
-      final bucketIndex = pathSegments.indexOf('product-images');
-      if (bucketIndex != -1 && bucketIndex + 1 < pathSegments.length) {
-        final path = pathSegments.sublist(bucketIndex + 1).join('/');
-        final storage = _superBaseClient.storage.from('product-images');
-        await storage.remove([path]);
-      }
-    } catch (e) {
-      developer.log('Error deleting image: $e');
+      final storage = Supabase.instance.client.storage.from('product-images');
+
+      final result = await storage.remove([path]);
+
+      developer.log('REMOVE RESULT: $result');
+    } catch (e, s) {
+      developer.log('ERROR: $e');
+      developer.log('$s');
     }
+  }
+
+  String _getStoragePathFromReference(String imageReference) {
+    final trimmed = imageReference.trim();
+    if (trimmed.isEmpty) {
+      return '';
+    }
+
+    try {
+      final uri = Uri.parse(trimmed);
+      if (uri.hasScheme && uri.host.isNotEmpty) {
+        final pathSegments = uri.pathSegments;
+        final bucketIndex = pathSegments.indexOf('product-images');
+        if (bucketIndex != -1 && bucketIndex + 1 < pathSegments.length) {
+          return pathSegments.sublist(bucketIndex + 1).join('/');
+        }
+      }
+    } catch (_) {}
+
+    return trimmed.replaceFirst(RegExp(r'^/+'), '');
   }
 }

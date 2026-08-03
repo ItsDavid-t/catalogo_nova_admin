@@ -13,7 +13,7 @@ abstract class ProductRepository {
   Future<Either<Failure, Unit>> addProduct(Product product);
   Future<Either<Failure, Unit>> deleteProduct(int id);
   Future<Either<Failure, Unit>> updateProduct(Product product);
-  Future<Either<Failure, String>> uploadProductImage(
+  Future<Either<Failure, Map<String, String>>> uploadProductImage(
     Uint8List bytes,
     String fileName,
   );

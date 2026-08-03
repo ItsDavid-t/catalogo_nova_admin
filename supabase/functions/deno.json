@@ -1,0 +1,15 @@
+{
+  "imports": {},
+  "tasks": {
+    "dev": "deno run --allow-all --env ./delete-image/index.ts"
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"]
+    }
+  },
+  "fmt": {
+    "semiColons": true,
+    "singleQuote": false
+  }
+}

@@ -40,7 +40,6 @@ class SaleRepositoryImpl implements SaleRepository {
     await _supabase.from('sale_item').insert(payloadBasic);
   }
 
-  /// Para obtener cada venta de una tienda en específico
   @override
   @override
   Future<Either<Failure, List<Sale>>> getSalesByShop(

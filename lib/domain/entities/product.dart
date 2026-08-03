@@ -26,6 +26,7 @@ class Product {
   final double sellPrice;
   final String currency;
   final String imgUrl;
+  final String? imgPath;
   final ProductStatus status;
   final DateTime createdAt;
 
@@ -42,6 +43,7 @@ class Product {
     this.lowStockAlert = 0,
     this.currency = 'USD',
     required this.imgUrl,
+    this.imgPath,
     required this.status,
     required this.createdAt,
   });
@@ -59,6 +61,7 @@ class Product {
       'sell_price': sellPrice,
       'currency': currency,
       'img_url': imgUrl,
+      'img_path': imgPath,
       'status': status.name,
       'created_at': createdAt.toIso8601String(),
     };
@@ -87,6 +90,7 @@ class Product {
           : double.tryParse((map['sell_price']).toString()) ?? 0.0,
       currency: (map['currency'] ?? 'USD') as String,
       imgUrl: (map['img_url'] ?? '') as String,
+      imgPath: (map['img_path']) as String?,
       status: _statusFromString((map['status'] ?? 'available') as String),
       createdAt: rawDate is String
           ? DateTime.tryParse(rawDate) ?? DateTime.now()
@@ -122,6 +126,7 @@ class Product {
     double? sellPrice,
     String? currency,
     String? imgUrl,
+    String? imgPath,
     ProductStatus? status,
     DateTime? createdAt,
   }) {
@@ -138,6 +143,7 @@ class Product {
       sellPrice: sellPrice ?? this.sellPrice,
       currency: currency ?? this.currency,
       imgUrl: imgUrl ?? this.imgUrl,
+      imgPath: imgPath ?? this.imgPath,
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
     );

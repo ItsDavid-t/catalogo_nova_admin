@@ -38,8 +38,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
   bool _isSubmitting = false;
   final _costPriceFocusNode = FocusNode();
   final _sellPriceFocusNode = FocusNode();
+  final _stockFocusNode = FocusNode();
+  final _lowStockAlertFocusNode = FocusNode();
   bool _showCostPriceHint = true;
   bool _showSellPriceHint = true;
+  bool _showStockHint = true;
+  bool _showLowStockAlertHint = true;
   static const List<String> _currencyOptions = ['USD', 'EUR', 'MLC', 'CUP'];
 
   @override
@@ -60,6 +64,22 @@ class _AddProductScreenState extends State<AddProductScreen> {
       }
     });
 
+    _stockController.addListener(() {
+      if (mounted) {
+        setState(() {
+          _showStockHint = !_stockFocusNode.hasFocus;
+        });
+      }
+    });
+
+    _lowStockAlertController.addListener(() {
+      if (mounted) {
+        setState(() {
+          _showLowStockAlertHint = !_lowStockAlertFocusNode.hasFocus;
+        });
+      }
+    });
+
     if (widget.product != null) {
       _nameController.text = widget.product!.name;
       _descriptionController.text = widget.product!.description ?? '';
@@ -73,8 +93,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
       _selectedCurrency = widget.product!.currency;
     } else {
       _selectedStatus = ProductStatus.available;
-      _stockController.text = '1';
-      _lowStockAlertController.text = '0';
     }
     final currentUserId = context.read<AuthCubit>().currentSession?.userId;
     context.read<CategoryCubit>().fetchMainCategories(shopId: currentUserId);
@@ -93,10 +111,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _lowStockAlertController.dispose();
     _costPriceFocusNode.dispose();
     _sellPriceFocusNode.dispose();
+    _stockFocusNode.dispose();
+    _lowStockAlertFocusNode.dispose();
     super.dispose();
   }
 
   void _submitForm() async {
+    String? uploadedImageUrl;
+
     if (_isSubmitting) return;
     if (!_formKey.currentState!.validate()) return;
     if (_selectedFamily == null) {
@@ -109,79 +131,118 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
 
     if (_imgUrlController.text.isEmpty && _selectedImageBytes == null) {
-      _showErrorSnackBar('Por favor, selecciona o ingresa una imagen');
+      _showErrorSnackBar('Por favor, selecciona una imagen');
       return;
     }
 
     setState(() => _isSubmitting = true);
-    String imgUrl = _imgUrlController.text;
 
-    if (_selectedImageBytes != null && _selectedImageName != null) {
-      final uploadedUrl = await context.read<ProductCubit>().uploadProductImage(
-        _selectedImageBytes!,
-        _selectedImageName!,
+    try {
+      String imgUrl = _imgUrlController.text;
+      String? uploadedImagePath;
+
+      if (_selectedImageBytes != null && _selectedImageName != null) {
+        final uploadResult = await context
+            .read<ProductCubit>()
+            .uploadProductImage(_selectedImageBytes!, _selectedImageName!);
+        if (uploadResult == null) {
+          if (mounted) setState(() => _isSubmitting = false);
+          return;
+        }
+        imgUrl = uploadResult['url']!;
+        uploadedImageUrl = uploadResult['url'];
+        uploadedImagePath = uploadResult['path'];
+        _imgUrlController.text = uploadResult['url']!;
+      }
+      final currentUserId = context.read<AuthCubit>().currentSession?.userId;
+
+      final classificationText = _classificationController.text.trim();
+      int idCategory = _selectedFamily!.id!;
+      if (classificationText.isNotEmpty) {
+        final finalCategoryById = await context
+            .read<CategoryCubit>()
+            .ensureSubCategory(
+              classificationText,
+              _selectedFamily!.id!,
+              currentUserId,
+            );
+
+        if (finalCategoryById != -1) {
+          idCategory = finalCategoryById;
+        }
+      }
+
+      final stock = int.tryParse(_stockController.text) ?? 0;
+      final lowStockAlert = int.tryParse(_lowStockAlertController.text) ?? 0;
+      var status = _selectedStatus!;
+      if (stock <= 0) {
+        status = ProductStatus.outOfStock;
+      }
+
+      final product = Product(
+        id: widget.product?.id,
+        name: _nameController.text,
+        description: _descriptionController.text.isEmpty
+            ? null
+            : _descriptionController.text,
+        classification: classificationText.isEmpty ? null : classificationText,
+        categoryId: idCategory,
+        stock: stock,
+        lowStockAlert: lowStockAlert,
+        costPrice: double.tryParse(_costPriceController.text) ?? 0.0,
+        sellPrice: double.tryParse(_sellPriceController.text) ?? 0.0,
+        currency: _selectedCurrency,
+        imgUrl: imgUrl,
+        imgPath: uploadedImagePath ?? widget.product?.imgPath,
+        status: status,
+        createdAt: widget.product?.createdAt ?? DateTime.now(),
+        shopId: currentUserId,
       );
-      if (uploadedUrl == null) {
-        if (mounted) setState(() => _isSubmitting = false);
-        return;
-      }
-      imgUrl = uploadedUrl;
-      _imgUrlController.text = uploadedUrl;
-      _selectedImageBytes = null;
-      _selectedImageName = null;
-    }
-    final currentUserId = context.read<AuthCubit>().currentSession?.userId;
 
-    final classificationText = _classificationController.text.trim();
-    int idCategory = _selectedFamily!.id!;
-    if (classificationText.isNotEmpty) {
-      final finalCategoryById = await context
-          .read<CategoryCubit>()
-          .ensureSubCategory(
-            classificationText,
-            _selectedFamily!.id!,
-            currentUserId,
+      bool success;
+
+      if (widget.product == null) {
+        success = await context.read<ProductCubit>().addProduct(product);
+      } else {
+        success = await context.read<ProductCubit>().updateProduct(product);
+      }
+
+      if (!success && uploadedImageUrl != null) {
+        // delete by path if we have it, else by url
+        if (uploadedImagePath != null) {
+          await context.read<ProductCubit>().deleteProductImage(
+            uploadedImagePath,
           );
-
-      if (finalCategoryById != -1) {
-        idCategory = finalCategoryById;
+        } else {
+          await context.read<ProductCubit>().deleteProductImage(
+            uploadedImageUrl,
+          );
+        }
       }
-    }
-
-    final stock = int.tryParse(_stockController.text) ?? 0;
-    final lowStockAlert = int.tryParse(_lowStockAlertController.text) ?? 0;
-    var status = _selectedStatus!;
-    if (stock <= 0) {
-      status = ProductStatus.outOfStock;
-    }
-
-    final product = Product(
-      id: widget.product?.id,
-      name: _nameController.text,
-      description: _descriptionController.text.isEmpty
-          ? null
-          : _descriptionController.text,
-      classification: classificationText.isEmpty ? null : classificationText,
-      categoryId: idCategory,
-      stock: stock,
-      lowStockAlert: lowStockAlert,
-      costPrice: double.tryParse(_costPriceController.text) ?? 0.0,
-      sellPrice: double.tryParse(_sellPriceController.text) ?? 0.0,
-      currency: _selectedCurrency,
-      imgUrl: imgUrl,
-      status: status,
-      createdAt: widget.product?.createdAt ?? DateTime.now(),
-      shopId: currentUserId,
-    );
-
-    if (widget.product == null) {
-      await context.read<ProductCubit>().addProduct(product);
-    } else {
-      await context.read<ProductCubit>().updateProduct(product);
-    }
-
-    if (mounted) {
-      setState(() => _isSubmitting = false);
+      if (success &&
+          widget.product != null &&
+          uploadedImageUrl != null &&
+          widget.product!.imgUrl != uploadedImageUrl) {
+        // delete old image using stored imgPath if present
+        if (widget.product!.imgPath != null &&
+            widget.product!.imgPath!.isNotEmpty) {
+          await context.read<ProductCubit>().deleteProductImage(
+            widget.product!.imgPath!,
+          );
+        } else {
+          await context.read<ProductCubit>().deleteProductImage(
+            widget.product!.imgUrl,
+          );
+        }
+      }
+      if (success) {
+        _selectedImageBytes = null;
+        _selectedImageName = null;
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -273,6 +334,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('selectedStatus = $_selectedStatus');
+    debugPrint(
+      'items = ${ProductStatus.values.where((status) => status != ProductStatus.outOfStock || widget.product != null).toList()}',
+    );
     final message = widget.product == null ? 'Agregar' : 'Actualizar';
     return BlocListener<ProductCubit, ProductState>(
       listener: (context, state) {
@@ -549,9 +614,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   children: [
                     TextFormField(
                       controller: _stockController,
-                      decoration: const InputDecoration(
+                      focusNode: _stockFocusNode,
+                      decoration: InputDecoration(
                         labelText: 'Existencias actuales',
-                        prefixIcon: Icon(Icons.layers),
+                        hintText: _showStockHint ? '0' : null,
+                        prefixIcon: const Icon(Icons.layers),
                       ),
                       keyboardType: TextInputType.number,
                       validator: (v) {
@@ -563,21 +630,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
                         }
                         return null;
                       },
-                      onChanged: (value) {
-                        final stock = int.tryParse(value) ?? 0;
-                        if (stock <= 0 && mounted) {
-                          setState(() {
-                            _selectedStatus = ProductStatus.outOfStock;
-                          });
-                        }
-                      },
                     ),
                     const SizedBox(height: 15),
                     TextFormField(
                       controller: _lowStockAlertController,
-                      decoration: const InputDecoration(
+                      focusNode: _lowStockAlertFocusNode,
+                      decoration: InputDecoration(
                         labelText: 'Existencias mínimas (alerta)',
-                        prefixIcon: Icon(Icons.notification_important),
+                        hintText: _showLowStockAlertHint ? '0' : null,
+                        prefixIcon: const Icon(Icons.notification_important),
                       ),
                       keyboardType: TextInputType.number,
                       validator: (v) {
@@ -595,6 +656,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 const SizedBox(height: 24),
                 _buildSection(
                   title: 'Estado del producto',
+
                   children: [
                     DropdownButtonFormField<ProductStatus>(
                       initialValue: _selectedStatus,

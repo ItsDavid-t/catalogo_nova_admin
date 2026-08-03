@@ -1,6 +1,5 @@
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
 import 'package:echo_stock/presentation/cubit/product/product_state.dart';
-import 'package:echo_stock/domain/entities/product.dart';
 import 'package:echo_stock/presentation/widgets/category/classification_filter_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -137,51 +136,6 @@ class _ProductFiltrerPanelState extends State<ProductFiltrerPanel> {
                 ),
               ),
               const SizedBox(height: 12),
-              Card(
-                elevation: 0,
-                color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Estados',
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: ProductStatus.values.map((status) {
-                          final selected = productLoaded.selectedStatus
-                              .contains(status);
-                          return FilterChip(
-                            label: Text(status.displayName),
-                            selected: selected,
-                            onSelected: (value) {
-                              final updateList = List<ProductStatus>.from(
-                                productLoaded.selectedStatus,
-                              );
-                              if (value) {
-                                updateList.add(status);
-                              } else {
-                                updateList.remove(status);
-                              }
-                              context.read<ProductCubit>().filterByStatus(
-                                updateList,
-                              );
-                            },
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
               Card(
                 elevation: 0,
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,

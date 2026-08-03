@@ -1,4 +1,5 @@
 import 'package:echo_stock/domain/entities/product.dart';
+import 'package:echo_stock/presentation/core/ui_feedback.dart';
 import 'package:echo_stock/presentation/cubit/category/category_cubit.dart';
 import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
 import 'package:echo_stock/presentation/cubit/category/category_state.dart';
@@ -41,6 +42,7 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
   }
 
   void _removeProduct(int id) {
+    dismissAppSnackBars(context);
     context.read<ProductCubit>().deleteProduct(id);
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -53,6 +55,7 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("♻️ RecycleBin build");
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blueGrey.shade700,
@@ -110,9 +113,16 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
       drawer: CustomDrawer(
         onRefresh: () => context.read<ProductCubit>().loadArchiveProducts(),
       ),
-      body: BlocBuilder<ProductCubit, ProductState>(
+      body: BlocConsumer<ProductCubit, ProductState>(
+        listener: (context, state) {
+          if (state is ProductError) {
+            _showErrorSnackBar(state.message);
+          }
+        },
         builder: (context, productState) {
+          debugPrint("📦 Estado papelera: ${productState.runtimeType}");
           int? idSelected;
+
           if (productState is ProductLoaded) {
             idSelected = productState.selectedCategoryId;
           }
@@ -147,21 +157,18 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
                 },
               ),
               Expanded(
-                child: BlocConsumer<ProductCubit, ProductState>(
-                  listener: (context, state) {
-                    if (state is ProductError) {
-                      _showErrorSnackBar(state.message);
+                child: Builder(
+                  builder: (context) {
+                    if (productState is ProductLoading) {
+                      return const Center(child: CircularProgressIndicator());
                     }
-                  },
-                  builder: (context, state) {
-                    if (state is ProductLoading) {
-                      return Center(child: CircularProgressIndicator());
-                    }
-                    if (state is ProductLoaded) {
-                      if (state.filteredProducts.isEmpty) {
+
+                    if (productState is ProductLoaded) {
+                      if (productState.filteredProducts.isEmpty) {
                         return _buildEmptyState();
                       }
-                      return _buildProductList(state.filteredProducts);
+
+                      return _buildProductList(productState.filteredProducts);
                     }
 
                     return const SizedBox();
@@ -248,7 +255,7 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
       itemCount: products.length,
       itemBuilder: (context, index) {
         return Dismissible(
-          key: Key(products[index].id.toString()),
+          key: ValueKey(products[index].id),
           direction: DismissDirection.endToStart,
           background: Container(
             color: Colors.redAccent,

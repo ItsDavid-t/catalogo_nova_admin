@@ -1,3 +1,4 @@
+import 'package:echo_stock/presentation/core/ui_feedback.dart';
 import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
 import 'package:echo_stock/presentation/screens/home_screen.dart';
@@ -10,6 +11,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class CustomDrawer extends StatelessWidget {
   final VoidCallback onRefresh;
   const CustomDrawer({super.key, required this.onRefresh});
+
+  void _navigateToScreen(BuildContext context, Widget screen) {
+    dismissAppSnackBars(context);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => screen),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,10 +47,7 @@ class CustomDrawer extends StatelessWidget {
             title: Text("Lista de productos"),
             onTap: () {
               context.read<ProductCubit>().loadProducts();
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const HomeScreen()),
-              );
+              _navigateToScreen(context, const HomeScreen());
             },
           ),
           ListTile(
@@ -51,10 +57,7 @@ class CustomDrawer extends StatelessWidget {
             ),
             title: const Text('Nueva Venta'),
             onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const NewSaleScreen()),
-              );
+              _navigateToScreen(context, const NewSaleScreen());
             },
           ),
           ListTile(
@@ -64,10 +67,7 @@ class CustomDrawer extends StatelessWidget {
             ),
             title: Text("Finanzas"),
             onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const FinanceScreen()),
-              );
+              _navigateToScreen(context, const FinanceScreen());
             },
           ),
           ListTile(
@@ -77,13 +77,7 @@ class CustomDrawer extends StatelessWidget {
             ),
             title: Text("Papelera de reciclaje"),
             onTap: () {
-              context.read<ProductCubit>().loadArchiveProducts();
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const RecycleBinScreen(),
-                ),
-              );
+              _navigateToScreen(context, const RecycleBinScreen());
             },
           ),
           const Divider(),
@@ -94,6 +88,7 @@ class CustomDrawer extends StatelessWidget {
             ),
             title: const Text('Cerrar sesión'),
             onTap: () {
+              dismissAppSnackBars(context);
               Navigator.pop(context);
               context.read<AuthCubit>().logout();
             },
