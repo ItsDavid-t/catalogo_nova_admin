@@ -1,9 +1,13 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:echo_stock/domain/core/failures.dart';
 import 'package:echo_stock/domain/entities/shop_profile.dart';
 import 'package:echo_stock/domain/repositories/shop_profile_repository.dart';
+import 'package:file_selector/file_selector.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -62,6 +66,52 @@ class ShopProfileRepositoryImpl implements ShopProfileRepository {
     } catch (e) {
       developer.log('ERROR DE SUPABASE STORAGE (shop_profile): $e');
       return Left(DatabaseFailure('Error al subir el logo de la tienda'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String?>> exportProfileData(
+    ShopProfile profile,
+  ) async {
+    try {
+      final suggestedName =
+          '${profile.shopName.replaceAll(RegExp(r"[^A-Za-z0-9_]"), '_')}_perfil.json';
+      final payload = {
+        'exported_at': DateTime.now().toIso8601String(),
+        'profile': profile.toMap(),
+      };
+      final jsonString = const JsonEncoder.withIndent('  ').convert(payload);
+      final bytes = Uint8List.fromList(jsonString.codeUnits);
+      final exportFile = XFile.fromData(
+        bytes,
+        mimeType: 'application/json',
+        name: suggestedName,
+      );
+
+      try {
+        final saveLocation = await getSaveLocation(
+          acceptedTypeGroups: [
+            XTypeGroup(label: 'JSON', extensions: ['json']),
+          ],
+          suggestedName: suggestedName,
+        );
+
+        if (saveLocation == null) {
+          return const Right(null);
+        }
+
+        await exportFile.saveTo(saveLocation.path);
+        return Right(saveLocation.path);
+      } on UnimplementedError catch (_) {
+        final dir = await getApplicationDocumentsDirectory();
+        final fallbackPath = '${dir.path}/$suggestedName';
+        final file = File(fallbackPath);
+        await file.writeAsBytes(bytes, flush: true);
+        return Right(fallbackPath);
+      }
+    } catch (e) {
+      developer.log('ERROR AL EXPORTAR PERFIL: $e');
+      return Left(DatabaseFailure('Error al exportar la información'));
     }
   }
 }

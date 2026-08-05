@@ -200,7 +200,7 @@ class ProductCubit extends Cubit<ProductState> {
     );
     if (currentState is ProductLoaded) {
       final searched = currentState.products.where((p) {
-        return p.name.toLowerCase().contains(query.toLowerCase());
+        return normalizeText(p.name).contains(normalizeText(query));
       }).toList();
 
       final filtered = _applyFilters(
@@ -214,6 +214,18 @@ class ProductCubit extends Cubit<ProductState> {
       );
       emit(currentState.copyWith(filteredProducts: filtered));
     }
+  }
+
+  String normalizeText(String input) {
+    String output;
+    output = input.toLowerCase();
+    output = output.replaceAll(RegExp(r'[áàäâ]'), 'a');
+    output = output.replaceAll(RegExp(r'[éèëê]'), 'e');
+    output = output.replaceAll(RegExp(r'[íìïî]'), 'i');
+    output = output.replaceAll(RegExp(r'[óòöô]'), 'o');
+    output = output.replaceAll(RegExp(r'[úùüû]'), 'u');
+    output = output.replaceAll(RegExp(r'[ñ]'), 'n');
+    return output;
   }
 
   Future<void> loadOutOfStockProducts() async {

@@ -40,9 +40,21 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       final isSellable = product.status == ProductStatus.available;
       final matchesQuery =
           _query.isEmpty ||
-          product.name.toLowerCase().contains(_query.toLowerCase());
+          _normalizeText(product.name).contains(_normalizeText(_query));
       return hasStock && isSellable && matchesQuery;
     }).toList();
+  }
+
+  String _normalizeText(String input) {
+    String output;
+    output = input.toLowerCase();
+    output = output.replaceAll(RegExp(r'[áàäâ]'), 'a');
+    output = output.replaceAll(RegExp(r'[éèëê]'), 'e');
+    output = output.replaceAll(RegExp(r'[íìïî]'), 'i');
+    output = output.replaceAll(RegExp(r'[óòöô]'), 'o');
+    output = output.replaceAll(RegExp(r'[úùüû]'), 'u');
+    output = output.replaceAll(RegExp(r'[ñ]'), 'n');
+    return output;
   }
 
   void _showMessage(String message, {bool isError = false}) {

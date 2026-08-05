@@ -8,4 +8,5 @@ abstract class ShopProfileRepository {
   Future<Either<Failure, ShopProfile?>> getByUserId(String userId);
   Future<Either<Failure, Unit>> upsert(ShopProfile profile);
   Future<Either<Failure, String>> uploadLogo(Uint8List bytes, String fileName);
+  Future<Either<Failure, String?>> exportProfileData(ShopProfile profile);
 }

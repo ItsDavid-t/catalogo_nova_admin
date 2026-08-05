@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:echo_stock/domain/core/di/service_locator.dart';
 import 'package:echo_stock/domain/entities/shop_profile.dart';
+import 'package:echo_stock/domain/usecases/shop_profile/export_shop_profile_data.dart';
 import 'package:echo_stock/domain/usecases/shop_profile/upload_shop_profile_image.dart';
 import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
 import 'package:echo_stock/presentation/cubit/auth/auth_state.dart';
@@ -162,6 +163,46 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
     final value = raw.trim();
     if (value.isEmpty) return null;
     return value.startsWith('@') ? value.substring(1) : value;
+  }
+
+  Future<void> _exportProfileInfo() async {
+    final authState = context.read<AuthCubit>().state;
+    if (authState is! AuthAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error: Usuario no autenticado')),
+      );
+      return;
+    }
+
+    final profile = ShopProfile(
+      id: authState.userSession.userId,
+      shopName: _shopNameController.text.trim().isEmpty
+          ? 'Mi tienda'
+          : _shopNameController.text.trim(),
+      whatsappNumber: _whatsappController.text.trim(),
+      telegramUsername: _normalizeTelegram(_telegramController.text),
+      description: _descriptionController.text.trim().isEmpty
+          ? null
+          : _descriptionController.text.trim(),
+      logoUrl: _normalizeOptional(_logoUrlController.text),
+      createdAt: DateTime.now(),
+    );
+
+    final result = await sl<ExportShopProfileData>()(profile);
+    result.fold(
+      (failure) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${failure.message}')));
+      },
+      (filePath) {
+        if (!mounted || filePath == null || filePath.isEmpty) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Datos exportados a $filePath')));
+      },
+    );
   }
 
   @override
@@ -360,6 +401,14 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
                       label: Text(
                         isSaving ? 'Guardando...' : 'Guardar Cambios',
                       ),
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: isSaving || _isUploadingLogo
+                          ? null
+                          : _exportProfileInfo,
+                      icon: const Icon(Icons.download),
+                      label: const Text('Exportar datos'),
                     ),
                     const SizedBox(height: 16),
                     OutlinedButton(

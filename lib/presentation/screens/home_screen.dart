@@ -326,13 +326,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       _showErrorSnackBar(state.message);
                     }
                     if (state is ProductLoaded) {
-                      // ensure cache updated when new data arrives
                       _cachedFilteredProducts = state.filteredProducts;
                     }
                   },
                   builder: (context, state) {
-                    // If we have a cached list and current state is not loaded,
-                    // show the cached products to avoid blank UI during transient states.
                     if (state is! ProductLoaded &&
                         _cachedFilteredProducts != null) {
                       return RefreshIndicator(

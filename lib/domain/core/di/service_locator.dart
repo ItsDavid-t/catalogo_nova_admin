@@ -35,6 +35,7 @@ import 'package:echo_stock/domain/usecases/sale/process_sale.dart';
 import 'package:echo_stock/domain/usecases/finance/build_product_lookup.dart';
 import 'package:echo_stock/domain/usecases/finance/build_finance_insights.dart';
 import 'package:echo_stock/domain/usecases/finance/calculate_profit_loss.dart';
+import 'package:echo_stock/domain/usecases/shop_profile/export_shop_profile_data.dart';
 import 'package:echo_stock/domain/usecases/shop_profile/get_shop_profile.dart';
 import 'package:echo_stock/domain/usecases/shop_profile/upload_shop_profile_image.dart';
 import 'package:echo_stock/domain/usecases/shop_profile/upsert_shop_profile.dart';
@@ -75,6 +76,7 @@ Future<void> init() async {
 
   sl.registerFactory(() => GetShopProfile(sl()));
   sl.registerFactory(() => UpsertShopProfile(sl()));
+  sl.registerFactory(() => ExportShopProfileData(sl()));
   sl.registerFactory(() => GetSalesByShop(sl<SaleRepository>()));
   sl.registerFactory(() => CreateSale(sl<SaleRepository>()));
   sl.registerFactory(() => ValidateSaleStock(sl<ProductRepository>()));
