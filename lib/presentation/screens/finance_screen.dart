@@ -33,7 +33,7 @@ class _FinanceScreenState extends State<FinanceScreen> {
   }
 
   Future<void> _loadFinances() async {
-    final shopId = context.read<AuthCubit>().currentSession?.userId;
+    final shopId = context.read<AuthCubit>().currentSession?.shopId;
 
     if (shopId == null) return;
 

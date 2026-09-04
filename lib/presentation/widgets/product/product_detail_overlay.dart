@@ -3,7 +3,9 @@ import 'dart:ui';
 import 'package:echo_stock/domain/core/di/service_locator.dart';
 import 'package:echo_stock/domain/entities/product.dart';
 import 'package:echo_stock/domain/usecases/category/get_category_by_id.dart';
+import 'package:echo_stock/presentation/cubit/auth/auth_cubit.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProductDetailOverlay extends StatefulWidget {
   final Product product;
@@ -286,7 +288,12 @@ class _ProductDetailOverlayState extends State<ProductDetailOverlay> {
                             padding: EdgeInsets.all(12),
                             child: Column(
                               children: [
-                                if (widget.product.costPrice > 0)
+                                if ((context
+                                            .read<AuthCubit>()
+                                            .currentSession
+                                            ?.isAdmin ??
+                                        false) &&
+                                    widget.product.costPrice > 0)
                                   Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,

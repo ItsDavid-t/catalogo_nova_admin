@@ -23,7 +23,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   @override
   void initState() {
     super.initState();
-    final shopId = context.read<AuthCubit>().currentSession?.userId;
+    final shopId = context.read<AuthCubit>().currentSession?.shopId;
     context.read<ProductCubit>().loadProducts(shopId: shopId);
     context.read<SaleCubit>().clearCart();
   }
@@ -68,7 +68,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
   }
 
   Future<void> _confirmSale() async {
-    final shopId = context.read<AuthCubit>().currentSession?.userId;
+    final shopId = context.read<AuthCubit>().currentSession?.shopId;
     if (shopId == null) {
       _showMessage('Sesión no válida', isError: true);
       return;
@@ -98,7 +98,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
       ),
       drawer: CustomDrawer(
         onRefresh: () {
-          final shopId = context.read<AuthCubit>().currentSession?.userId;
+          final shopId = context.read<AuthCubit>().currentSession?.shopId;
           context.read<ProductCubit>().loadProducts(shopId: shopId);
         },
       ),
@@ -109,7 +109,7 @@ class _NewSaleScreenState extends State<NewSaleScreen> {
           }
           if (state is SaleConfirmed) {
             _showMessage(state.message);
-            final shopId = context.read<AuthCubit>().currentSession?.userId;
+            final shopId = context.read<AuthCubit>().currentSession?.shopId;
             context.read<ProductCubit>().loadProducts(shopId: shopId);
           }
         },

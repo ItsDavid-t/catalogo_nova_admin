@@ -94,7 +94,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     } else {
       _selectedStatus = ProductStatus.available;
     }
-    final currentUserId = context.read<AuthCubit>().currentSession?.userId;
+    final currentUserId = context.read<AuthCubit>().currentSession?.shopId;
     context.read<CategoryCubit>().fetchMainCategories(shopId: currentUserId);
   }
 
@@ -154,7 +154,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         uploadedImagePath = uploadResult['path'];
         _imgUrlController.text = uploadResult['url']!;
       }
-      final currentUserId = context.read<AuthCubit>().currentSession?.userId;
+      final currentUserId = context.read<AuthCubit>().currentSession?.shopId;
 
       final classificationText = _classificationController.text.trim();
       int idCategory = _selectedFamily!.id!;
@@ -307,7 +307,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     if (created != true) return;
 
-    final currentUserId = context.read<AuthCubit>().currentSession?.userId;
+    final currentUserId = context.read<AuthCubit>().currentSession?.shopId;
     final newCategoryName = _newCategoryController.text.trim();
     await context.read<CategoryCubit>().addCategory(
       Category(name: newCategoryName, shopId: currentUserId),
@@ -561,28 +561,32 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     const SizedBox(height: 15),
                     Row(
                       children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _costPriceController,
-                            focusNode: _costPriceFocusNode,
-                            decoration: InputDecoration(
-                              labelText: 'Precio de costo',
-                              hintText: _showCostPriceHint ? '0.00' : null,
-                              prefixIcon: const Icon(Icons.attach_money),
+                        if (context.read<AuthCubit>().currentSession?.isAdmin ??
+                            false) ...[
+                          Expanded(
+                            child: TextFormField(
+                              controller: _costPriceController,
+                              focusNode: _costPriceFocusNode,
+                              decoration: InputDecoration(
+                                labelText: 'Precio de costo',
+                                hintText: _showCostPriceHint ? '0.00' : null,
+                                prefixIcon: const Icon(Icons.attach_money),
+                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              validator: (v) {
+                                if (v == null || v.isEmpty) return null;
+                                if (double.tryParse(v) == null) {
+                                  return 'Debe ser un número válido';
+                                }
+                                return null;
+                              },
                             ),
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            validator: (v) {
-                              if (v == null || v.isEmpty) return null;
-                              if (double.tryParse(v) == null) {
-                                return 'Debe ser un número válido';
-                              }
-                              return null;
-                            },
                           ),
-                        ),
-                        const SizedBox(width: 12),
+                          const SizedBox(width: 12),
+                        ],
                         Expanded(
                           child: TextFormField(
                             controller: _sellPriceController,

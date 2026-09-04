@@ -11,7 +11,12 @@ class SignUp {
   Future<Either<Failure, UserSession>> call({
     required String email,
     required String password,
+    required String inviteCode,
   }) {
-    return _repository.signUp(email: email, password: password);
+    return _repository.signUp(
+      email: email,
+      password: password,
+      inviteCode: inviteCode,
+    );
   }
 }

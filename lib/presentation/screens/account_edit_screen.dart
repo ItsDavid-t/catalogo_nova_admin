@@ -207,6 +207,21 @@ class _AccountEditScreenState extends State<AccountEditScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = context.read<AuthCubit>().currentSession?.isAdmin ?? false;
+    if (!isAdmin) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Acceso denegado')),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Text(
+              'No tienes permisos para modificar el perfil. Contacta al administrador.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      );
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('Editar Cuenta'), elevation: 0),
       body: BlocConsumer<ShopProfileCubit, ShopProfileState>(

@@ -16,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _inviteCodeController = TextEditingController();
   bool _isRegisterMode = false;
   bool _obscurePassword = true;
 
@@ -23,6 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _inviteCodeController.dispose();
     super.dispose();
   }
 
@@ -38,7 +40,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final cubit = context.read<AuthCubit>();
 
     if (_isRegisterMode) {
-      cubit.register(email: email, password: password);
+      final inviteCode = _inviteCodeController.text.trim();
+      cubit.register(email: email, password: password, inviteCode: inviteCode);
     } else {
       cubit.login(email: email, password: password);
     }
@@ -132,6 +135,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             return null;
                           },
                         ),
+                        if (_isRegisterMode) ...[
+                          const SizedBox(height: 16),
+                          CustomTextFormField(
+                            controller: _inviteCodeController,
+                            label: 'Código de invitación',
+                            prefixIcon: Icons.vpn_key_outlined,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Ingresa el código de invitación';
+                              }
+                              return null;
+                            },
+                          ),
+                        ],
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(

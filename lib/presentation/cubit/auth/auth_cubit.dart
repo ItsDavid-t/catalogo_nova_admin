@@ -7,6 +7,7 @@ import 'package:echo_stock/domain/usecases/auth/sign_out.dart';
 import 'package:echo_stock/domain/usecases/auth/sign_up.dart';
 import 'package:echo_stock/domain/usecases/auth/watch_auth_session.dart';
 import 'package:echo_stock/presentation/cubit/auth/auth_state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AuthCubit extends Cubit<AuthState> {
@@ -70,10 +71,15 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> register({
     required String email,
     required String password,
+    required String inviteCode,
   }) async {
     _handlingAuthAction = true;
     emit(const AuthLoading());
-    final result = await _signUp(email: email, password: password);
+    final result = await _signUp(
+      email: email,
+      password: password,
+      inviteCode: inviteCode,
+    );
     result.fold(
       (failure) => emit(AuthFailure(failure.message)),
       (session) => emit(AuthAuthenticated(session)),
@@ -82,13 +88,27 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> logout() async {
+    debugPrint('🔴 AuthCubit INSTANCE: ${identityHashCode(this)}');
+    debugPrint('🔴 LOGOUT: entrando a logout');
+
     _handlingAuthAction = true;
     emit(const AuthLoading());
+
     final result = await _signOut();
+
+    debugPrint('🔴 LOGOUT: resultado signOut = $result');
+
     result.fold(
-      (failure) => emit(AuthFailure(failure.message)),
-      (_) => emit(const AuthUnauthenticated()),
+      (failure) {
+        debugPrint('🔴 LOGOUT: FALLÓ = ${failure.message}');
+        emit(AuthFailure(failure.message));
+      },
+      (_) {
+        debugPrint('🔴 LOGOUT: emitiendo AuthUnauthenticated');
+        emit(const AuthUnauthenticated());
+      },
     );
+
     Future.microtask(() {
       _handlingAuthAction = false;
     });

@@ -3,13 +3,17 @@ import 'dart:developer' as developer;
 import 'package:echo_stock/domain/core/failures.dart';
 import 'package:echo_stock/domain/entities/user_session.dart';
 import 'package:echo_stock/domain/repositories/auth_repository.dart';
+import 'package:echo_stock/domain/repositories/invite_code_repository.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final SupabaseClient _supabase;
+  final InviteCodeRepository _inviteCodeRepository;
 
-  AuthRepositoryImpl(this._supabase);
+  AuthRepositoryImpl(this._supabase, this._inviteCodeRepository);
+
+  static const _defaultRole = 'employee';
 
   @override
   Future<Either<Failure, UserSession>> signIn({
@@ -25,7 +29,8 @@ class AuthRepositoryImpl implements AuthRepository {
       if (user == null) {
         return const Left(AuthenticationFailure('No se pudo iniciar sesión'));
       }
-      return Right(_toSession(user));
+      final profile = await _fetchUserProfile(user.id);
+      return Right(_toSession(user, profile.role, profile.ownerId));
     } on AuthException catch (e) {
       developer.log('AUTH signIn: ${e.message}');
       return Left(_mapAuthException(e));
@@ -39,8 +44,25 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, UserSession>> signUp({
     required String email,
     required String password,
+    required String inviteCode,
   }) async {
     try {
+      final codeResult = await _inviteCodeRepository.validateCode(
+        inviteCode.trim(),
+      );
+
+      final codeData = await codeResult.fold(
+        (failure) => Future.value(null),
+        (data) => Future.value(data),
+      );
+
+      if (codeData == null) {
+        return const Left(AuthenticationFailure('Código inválido o ya usado'));
+      }
+
+      final role = (codeData['role'] as String?)?.toLowerCase() ?? _defaultRole;
+      final createdBy = codeData['created_by']?.toString();
+
       final response = await _supabase.auth.signUp(
         email: email.trim(),
         password: password,
@@ -49,6 +71,42 @@ class AuthRepositoryImpl implements AuthRepository {
       if (user == null) {
         return const Left(AuthenticationFailure('No se pudo crear la cuenta'));
       }
+
+      final ownerId = role == 'admin' ? user.id : createdBy;
+      developer.log(
+        'AUTH signUp: codeData createdBy=$createdBy role=$role ownerIdComputed=$ownerId',
+      );
+      await _saveUserProfile(user.id, role, ownerId: ownerId);
+
+      // Verify profile was saved with expected ownerId and log result
+      try {
+        final savedProfile = await _fetchUserProfile(user.id);
+        developer.log(
+          'AUTH signUp: savedProfile ownerId=${savedProfile.ownerId} role=${savedProfile.role}',
+        );
+      } catch (e, st) {
+        developer.log(
+          'AUTH signUp: error fetching saved profile',
+          error: e,
+          stackTrace: st,
+        );
+      }
+
+      final markResult = await _inviteCodeRepository.markUsed(
+        inviteCode.trim(),
+        usedBy: user.id,
+      );
+      markResult.fold(
+        (failure) {
+          developer.log('AUTH signUp: markUsed failed: ${failure.message}');
+        },
+        (_) {
+          developer.log(
+            'AUTH signUp: invite code marked as used for user ${user.id}',
+          );
+        },
+      );
+
       if (response.session == null) {
         return const Left(
           AuthenticationFailure(
@@ -56,7 +114,8 @@ class AuthRepositoryImpl implements AuthRepository {
           ),
         );
       }
-      return Right(_toSession(user));
+
+      return Right(_toSession(user, role, ownerId));
     } on AuthException catch (e) {
       developer.log('AUTH signUp: ${e.message}');
       return Left(_mapAuthException(e));
@@ -80,48 +139,78 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  ///Obtener la session actual , asi el user no tiene q registrarse de nuevo
   @override
   Future<Either<Failure, UserSession?>> getCurrentSession() async {
     try {
       final session = _supabase.auth.currentSession;
-      developer.log("SESSION: $session");
-      developer.log("USER: ${session?.user.id}");
-      developer.log("TOKEN: ${session?.accessToken.substring(0, 20)}...");
       final user = session?.user;
       if (user == null) {
         return const Right(null);
       }
-      return Right(_toSession(user));
+      final profile = await _fetchUserProfile(user.id);
+      return Right(_toSession(user, profile.role, profile.ownerId));
     } catch (e, st) {
       developer.log('AUTH getCurrentSession error', error: e, stackTrace: st);
       return const Left(NetworkFailure('Error de conexión'));
     }
   }
 
-  ///Escucha los cambios en el estado de autentificacion
   @override
   Stream<UserSession?> watchAuthSession() {
     return _supabase.auth.onAuthStateChange
-        .map((event) {
+        .asyncMap((event) async {
           final user = event.session?.user;
           if (user == null || user.email == null) return null;
-
-          return UserSession(user.email!, user.id);
+          final profile = await _fetchUserProfile(user.id);
+          return _toSession(user, profile.role, profile.ownerId);
         })
         .handleError((error) {
           developer.log('AUTH stream error', error: error);
         });
   }
 
-  ///Para convertir un User a un UserSession
-  UserSession _toSession(User user) {
-    final email = user.email;
-
-    return UserSession(email ?? '', user.id);
+  UserSession _toSession(User user, String role, String? ownerId) {
+    return UserSession(user.email ?? '', user.id, role, ownerId: ownerId);
   }
 
-  /// Convierte errores de Supabase en errores de dominio
+  Future<({String role, String? ownerId})> _fetchUserProfile(
+    String userId,
+  ) async {
+    try {
+      final response = await _supabase
+          .from('profiles')
+          .select('role, owner_id')
+          .eq('user_id', userId)
+          .maybeSingle();
+
+      final role =
+          (response?['role'] as String?)?.toLowerCase() ?? _defaultRole;
+      final ownerId = response?['owner_id']?.toString();
+      return (role: role, ownerId: ownerId);
+    } catch (e, st) {
+      developer.log('ERROR OBTENIENDO PERFIL: $e', error: e, stackTrace: st);
+      return (role: _defaultRole, ownerId: null);
+    }
+  }
+
+  Future<void> _saveUserProfile(
+    String userId,
+    String role, {
+    String? ownerId,
+  }) async {
+    await _supabase.rpc(
+      'create_user_profile',
+      params: {'input_user_id': userId, 'input_role': role},
+    );
+
+    if (ownerId != null && ownerId.trim().isNotEmpty) {
+      await _supabase
+          .from('profiles')
+          .update({'owner_id': ownerId})
+          .eq('user_id', userId);
+    }
+  }
+
   Failure _mapAuthException(AuthException exception) {
     final code = exception.code?.toLowerCase() ?? '';
     final message = exception.message.toLowerCase();

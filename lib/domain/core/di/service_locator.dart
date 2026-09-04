@@ -44,6 +44,12 @@ import 'package:echo_stock/presentation/cubit/shop_profile/shop_profile_cubit.da
 import 'package:echo_stock/presentation/cubit/sale/sale_cubit.dart';
 import 'package:echo_stock/presentation/cubit/category/category_cubit.dart';
 import 'package:echo_stock/presentation/cubit/product/product_cubit.dart';
+import 'package:echo_stock/domain/repositories/invite_code_repository.dart';
+import 'package:echo_stock/data/repositories/invite_code_repository_impl.dart';
+import 'package:echo_stock/domain/usecases/invite/create_invite_code.dart';
+import 'package:echo_stock/domain/usecases/invite/list_invite_codes.dart';
+import 'package:echo_stock/domain/usecases/invite/revoke_invite_code.dart';
+import 'package:echo_stock/domain/usecases/invite/mark_invite_code_used.dart';
 import 'package:get_it/get_it.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -52,7 +58,13 @@ final sl = GetIt.instance;
 Future<void> init() async {
   sl.registerLazySingleton(() => Supabase.instance.client);
 
-  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(sl()));
+  sl.registerLazySingleton<InviteCodeRepository>(
+    () => InviteCodeRepositoryImpl(sl()),
+  );
+
+  sl.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(sl(), sl<InviteCodeRepository>()),
+  );
 
   sl.registerLazySingleton<ProductRepository>(
     () => ProductRepositoryImpl(sl()),
@@ -173,4 +185,10 @@ Future<void> init() async {
       sl<EnsureSubCategory>(),
     ),
   );
+
+  // Invite codes usecases
+  sl.registerFactory(() => CreateInviteCode(sl<InviteCodeRepository>()));
+  sl.registerFactory(() => ListInviteCodes(sl<InviteCodeRepository>()));
+  sl.registerFactory(() => RevokeInviteCode(sl<InviteCodeRepository>()));
+  sl.registerFactory(() => MarkInviteCodeUsed(sl<InviteCodeRepository>()));
 }

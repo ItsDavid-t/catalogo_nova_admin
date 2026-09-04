@@ -85,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await Future.wait([
       context.read<ProductCubit>().loadProducts(),
       context.read<CategoryCubit>().fetchMainCategories(
-        shopId: context.read<AuthCubit>().currentSession?.userId,
+        shopId: context.read<AuthCubit>().currentSession?.shopId,
       ),
     ]);
   }
@@ -185,18 +185,19 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             icon: Icon(Icons.tune_outlined),
           ),
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const AccountEditScreen(),
-                ),
-              );
-            },
-            icon: Icon(Icons.account_circle_outlined),
-            tooltip: 'Editar cuenta',
-          ),
+          if (context.read<AuthCubit>().currentSession?.isAdmin ?? false)
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AccountEditScreen(),
+                  ),
+                );
+              },
+              icon: Icon(Icons.account_circle_outlined),
+              tooltip: 'Editar cuenta',
+            ),
         ],
         title: SizedBox(
           height: kToolbarHeight,
@@ -260,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               shopId: context
                                   .read<AuthCubit>()
                                   .currentSession
-                                  ?.userId,
+                                  ?.shopId,
                             ),
                       ),
                     );

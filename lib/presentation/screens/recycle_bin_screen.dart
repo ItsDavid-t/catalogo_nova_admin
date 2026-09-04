@@ -30,7 +30,7 @@ class _RecycleBinScreenState extends State<RecycleBinScreen> {
     super.initState();
     context.read<ProductCubit>().loadArchiveProducts();
     context.read<CategoryCubit>().fetchMainCategories(
-      shopId: context.read<AuthCubit>().currentSession?.userId,
+      shopId: context.read<AuthCubit>().currentSession?.shopId,
     );
   }
 
