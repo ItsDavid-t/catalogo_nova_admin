@@ -78,10 +78,7 @@ class ProcessSale {
         return Left(failure);
       case Right(value: final created):
         final stockResult = await _decrementStockForSale(created.items);
-        return stockResult.fold(
-          Left.new,
-          (_) => Right(created),
-        );
+        return stockResult.fold(Left.new, (_) => Right(created));
     }
   }
 }

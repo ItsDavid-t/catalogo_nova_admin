@@ -33,10 +33,7 @@ class AuthFailure extends AuthState {
   final String message;
   final bool suggestRegistration;
 
-  const AuthFailure(
-    this.message, {
-    this.suggestRegistration = false,
-  });
+  const AuthFailure(this.message, {this.suggestRegistration = false});
 
   @override
   List<Object?> get props => [message, suggestRegistration];

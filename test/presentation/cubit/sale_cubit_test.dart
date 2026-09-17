@@ -160,7 +160,7 @@ void main() {
 
         final item = CartItem(
           productId: 1,
-          productName: 'Producto sin stock',
+          productName: 'Producto sin existencias disponibles',
           quantity: 1,
           sellPrice: 10.0,
           costPrice: 5.0,
@@ -171,7 +171,7 @@ void main() {
         final events = await futureStates;
 
         expect(events, [
-          const SaleFailure('Producto sin stock disponible'),
+          const SaleFailure('Producto sin existencias disponibles'),
           const CartUpdated(cartItems: [], totalAmount: 0),
         ]);
         expect(cubit.cartItems, isEmpty);

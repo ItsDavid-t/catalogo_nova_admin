@@ -4,6 +4,7 @@ class UserSession extends Equatable {
   final String email;
   final String userId;
   final String role;
+
   /// ID del dueño de la tienda (admin). Para empleados viene de la invitación.
   final String? ownerId;
 
